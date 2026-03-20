@@ -3,11 +3,11 @@ import { ThemeProvider } from "@mui/material";
 import mainTheme from "./theme";
 
 function App() {
-  
+
   return (
     <ThemeProvider theme={mainTheme}>
-    <AppRoutes />;
-  </ThemeProvider>
+      <AppRoutes />;
+    </ThemeProvider>
   )
 }
 
