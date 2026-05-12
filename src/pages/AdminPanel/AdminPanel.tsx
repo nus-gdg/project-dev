@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link as RouterLink, useNavigate } from "react-router-dom";
 import RecruitingInput from "./components/RecruitingInput";
 import {
   Box,
@@ -32,15 +32,25 @@ export default function AdminPanel() {
 
   const navigate = useNavigate()
 
-  // Fetch projects
-  useEffect(() => {
-    fetchProjects();
-  }, []);
-
   const fetchProjects = async () => {
     const projs = await getProjects();
     setProjects(projs);
   };
+
+  // Fetch projects
+  useEffect(() => {
+    let isActive = true;
+
+    getProjects().then((projs) => {
+      if (isActive) {
+        setProjects(projs);
+      }
+    });
+
+    return () => {
+      isActive = false;
+    };
+  }, []);
 
   const handleOpenCreate = () => {
     setEditingProject(null);
@@ -102,30 +112,58 @@ export default function AdminPanel() {
 
       <Paper elevation={2} sx={{ background: "linear-gradient(135deg, #283C77 27%, #20053D 100%)", p: 4 }}>
         <Stack>
-          {projects.map((proj) => (
-            <Box
-              key={proj.id}
-              sx={{ mb: 1, borderRadius: 1, backgroundColor: "rgba(166, 225, 255, 0.5)", textAlign: "left", p: 2 }}
-            >
-              <Box sx={{ display: "flex", gap: 1, alignItems: "center" }}>
-                <Typography variant="h3">{proj.title}</Typography>
-                <IconButton onClick={() => handleOpenEdit(proj)}>
-                  <EditIcon />
-                </IconButton>
-              </Box>
+          {projects.map((proj) => {
+            const projectPath = proj.id ? `/project/${proj.id}` : undefined;
 
-              <Typography variant="body2">{proj.description.length > 50
-                ? proj.description.slice(0, 1000) + "..."
-                : proj.description}</Typography>
-              <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap", rowGap: 1, mt: 2 }}>
-                <Typography variant="body1">Recruiting: </Typography>
-                {proj.roles.map((role, index) => {
-                  return <Chip key={`${proj.title}-${index}`} label={role} />
-                })}
-              </Box>
+            return (
+              <Box
+                key={proj.id ?? proj.title}
+                sx={{ mb: 1, borderRadius: 1, backgroundColor: "rgba(166, 225, 255, 0.5)", textAlign: "left", p: 2 }}
+              >
+                <Box sx={{ display: "flex", gap: 1, alignItems: "flex-start" }}>
+                  <Box
+                    component={projectPath ? RouterLink : "div"}
+                    to={projectPath}
+                    sx={{
+                      flex: 1,
+                      minWidth: 0,
+                      color: "inherit",
+                      textDecoration: "none",
+                      borderRadius: 1,
+                      p: 1,
+                      mx: -1,
+                      my: -1,
+                      transition: "background-color 0.2s ease, transform 0.2s ease",
+                      "&:hover": projectPath ? {
+                        backgroundColor: "rgba(255, 255, 255, 0.14)",
+                        transform: "translateY(-1px)",
+                      } : undefined,
+                      "&:focus-visible": {
+                        outline: "3px solid #67F5D8",
+                        outlineOffset: 2,
+                      },
+                    }}
+                  >
+                    <Typography variant="h3">{proj.title}</Typography>
 
-            </Box>
-          ))}
+                    <Typography variant="body2">{proj.description.length > 50
+                      ? proj.description.slice(0, 1000) + "..."
+                      : proj.description}</Typography>
+                    <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap", rowGap: 1, mt: 2 }}>
+                      <Typography variant="body1">Recruiting: </Typography>
+                      {proj.roles.map((role, index) => {
+                        return <Chip key={`${proj.title}-${index}`} label={role} />
+                      })}
+                    </Box>
+                  </Box>
+
+                  <IconButton onClick={() => handleOpenEdit(proj)} aria-label={`Edit ${proj.title}`}>
+                    <EditIcon />
+                  </IconButton>
+                </Box>
+              </Box>
+            );
+          })}
         </Stack>
       </Paper>
 

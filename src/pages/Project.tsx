@@ -1,3 +1,276 @@
+import { useEffect, useState, type ReactElement } from "react";
+import { useNavigate, useParams } from "react-router-dom";
+import ArrowBackIcon from "@mui/icons-material/ArrowBack";
+import ArrowBackIosNewIcon from "@mui/icons-material/ArrowBackIosNew";
+import ArrowForwardIosIcon from "@mui/icons-material/ArrowForwardIos";
+import CodeIcon from "@mui/icons-material/Code";
+import EditIcon from "@mui/icons-material/Edit";
+import GroupsIcon from "@mui/icons-material/Groups";
+import PlayArrowIcon from "@mui/icons-material/PlayArrow";
+import SportsEsportsIcon from "@mui/icons-material/SportsEsports";
+import { getProject, type Project as ProjectRecord } from "../firebase/projects";
+import "./Project.css";
+
+const roleToneClasses = ["is-purple", "is-coral", "is-gold", "is-cyan"];
+
+function getRoleIcon(role: string): ReactElement {
+  const normalizedRole = role.toLowerCase();
+
+  if (
+    normalizedRole.includes("program") ||
+    normalizedRole.includes("code") ||
+    normalizedRole.includes("developer") ||
+    normalizedRole.includes("engineer")
+  ) {
+    return <CodeIcon fontSize="inherit" />;
+  }
+
+  if (
+    normalizedRole.includes("game") ||
+    normalizedRole.includes("designer") ||
+    normalizedRole.includes("level")
+  ) {
+    return <SportsEsportsIcon fontSize="inherit" />;
+  }
+
+  if (
+    normalizedRole.includes("writer") ||
+    normalizedRole.includes("narrative") ||
+    normalizedRole.includes("story")
+  ) {
+    return <EditIcon fontSize="inherit" />;
+  }
+
+  return <GroupsIcon fontSize="inherit" />;
+}
+
+function getRoleTone(role: string, index: number) {
+  const normalizedRole = role.toLowerCase();
+
+  if (normalizedRole.includes("program") || normalizedRole.includes("code")) {
+    return "is-coral";
+  }
+
+  if (normalizedRole.includes("writer") || normalizedRole.includes("story")) {
+    return "is-gold";
+  }
+
+  if (normalizedRole.includes("game")) {
+    return "is-cyan";
+  }
+
+  return roleToneClasses[index % roleToneClasses.length];
+}
+
+function Header({ onBack }: { onBack: () => void }) {
+  return (
+    <header className="project-detail-header">
+      <span className="header-shape header-shape-one" />
+      <span className="header-shape header-shape-two" />
+      <span className="header-shape header-shape-three" />
+      <span className="header-shape header-shape-four" />
+      <span className="header-spark header-spark-one">+</span>
+      <span className="header-spark header-spark-two">+</span>
+
+      <div className="project-shell">
+        <h1 className="project-brand">PROJECT: DEV</h1>
+        <button className="project-back-button" type="button" onClick={onBack}>
+          <ArrowBackIcon fontSize="inherit" />
+          Back to projects
+        </button>
+      </div>
+    </header>
+  );
+}
+
+function ProjectLayout({
+  project,
+  loading,
+}: {
+  project: ProjectRecord | null;
+  loading: boolean;
+}) {
+  const title = project?.title ?? "Project title";
+  const description =
+    project?.description ??
+    "Loading the project description, recruiting roles, and application details.";
+  const roles = project?.roles ?? [];
+  const imageUrl = project?.imageUrl;
+
+  return (
+    <main className={`project-shell project-detail-panel${loading ? " project-loading" : ""}`}>
+      <section className="project-media-column" aria-label="Project media">
+        <div className="project-media-card">
+          <div className="project-preview-frame">
+            {imageUrl ? (
+              <img src={imageUrl} alt={`${title} preview`} />
+            ) : (
+              <div className="project-preview-placeholder" aria-hidden="true" />
+            )}
+          </div>
+
+          <div className="project-media-summary">
+            <h2 className="project-title">{title}</h2>
+            <a className="project-signup" href="#project-apply">
+              <span className="project-signup-icon">
+                <PlayArrowIcon fontSize="inherit" />
+              </span>
+              Sign up
+            </a>
+          </div>
+        </div>
+
+        <div className="project-carousel" aria-label="Project previews">
+          <button
+            className="project-carousel-arrow"
+            type="button"
+            aria-label="Previous preview"
+            title="Previous preview"
+          >
+            <ArrowBackIosNewIcon fontSize="small" />
+          </button>
+          <button className="project-thumb-button" type="button" aria-label="Preview 1">
+            {imageUrl ? <img src={imageUrl} alt="" /> : null}
+          </button>
+          <button className="project-thumb-button is-active" type="button" aria-label="Preview video">
+            <span className="project-thumb-play">
+              <PlayArrowIcon fontSize="small" />
+            </span>
+          </button>
+          <button className="project-thumb-button" type="button" aria-label="Preview 3" />
+          <button
+            className="project-carousel-arrow"
+            type="button"
+            aria-label="Next preview"
+            title="Next preview"
+          >
+            <ArrowForwardIosIcon fontSize="small" />
+          </button>
+        </div>
+      </section>
+
+      <section className="project-copy-column" aria-label="Project details">
+        <div className="project-copy-section">
+          <h2 className="project-section-title">Description</h2>
+          <p className="project-body">{description}</p>
+        </div>
+
+        <div className="project-copy-section">
+          <h2 className="project-section-title">Recruiting</h2>
+          {roles.length > 0 ? (
+            <div className="project-role-list" aria-label="Recruiting roles">
+              {roles.map((role, index) => (
+                <span
+                  className={`project-role-chip ${getRoleTone(role, index)}`}
+                  key={`${role}-${index}`}
+                >
+                  {getRoleIcon(role)}
+                  {role}
+                </span>
+              ))}
+            </div>
+          ) : (
+            <p className="project-role-empty">Recruiting roles will appear here.</p>
+          )}
+        </div>
+
+        <div className="project-copy-section" id="project-apply">
+          <h2 className="project-section-title">Info on applying</h2>
+          <p className="project-body">
+            Tell the project team which role you are interested in, what you would like to
+            contribute, and any portfolio or class project links that help show your work.
+          </p>
+        </div>
+      </section>
+    </main>
+  );
+}
+
+function ProjectStatus({
+  title,
+  message,
+  onBack,
+}: {
+  title: string;
+  message: string;
+  onBack: () => void;
+}) {
+  return (
+    <main className="project-status-panel">
+      <h2>{title}</h2>
+      <p>{message}</p>
+      <button className="project-back-button" type="button" onClick={onBack}>
+        <ArrowBackIcon fontSize="inherit" />
+        Back to projects
+      </button>
+    </main>
+  );
+}
+
 export default function Project() {
-    return <p>Project!!</p>
+  const { projectId } = useParams<{ projectId: string }>();
+  const navigate = useNavigate();
+  const [project, setProject] = useState<ProjectRecord | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+
+  const handleBack = () => {
+    navigate("/");
+  };
+
+  useEffect(() => {
+    let isActive = true;
+
+    async function loadProject() {
+      if (!projectId) {
+        setError("Missing project id.");
+        setLoading(false);
+        return;
+      }
+
+      setLoading(true);
+      setError("");
+      setProject(null);
+
+      try {
+        const projectData = await getProject(projectId);
+
+        if (isActive) {
+          setProject(projectData);
+        }
+      } catch {
+        if (isActive) {
+          setError("We could not load this project right now.");
+        }
+      } finally {
+        if (isActive) {
+          setLoading(false);
+        }
+      }
+    }
+
+    loadProject();
+
+    return () => {
+      isActive = false;
+    };
+  }, [projectId]);
+
+  return (
+    <div className="project-detail-page">
+      <Header onBack={handleBack} />
+
+      {error ? (
+        <ProjectStatus title="Project unavailable" message={error} onBack={handleBack} />
+      ) : !loading && !project ? (
+        <ProjectStatus
+          title="Project not found"
+          message="This project could not be found in the project list."
+          onBack={handleBack}
+        />
+      ) : (
+        <ProjectLayout project={project} loading={loading} />
+      )}
+    </div>
+  );
 }
