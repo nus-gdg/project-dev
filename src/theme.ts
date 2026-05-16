@@ -24,7 +24,7 @@ const mainTheme = createTheme({
         }
     },
     typography: {
-        fontFamily: '"Overpass", sans-serif', //default font
+        fontFamily: '"Overpass Variable", sans-serif', //default font
         h1: {
             fontSize: "5rem",
         },
@@ -49,6 +49,7 @@ const mainTheme = createTheme({
         },
         button: {
             fontSize: "1rem",
+            fontFamily: '"Nunito Variable", sans-serif',
             textTransform: "none",
             fontWeight: "600",
         },
