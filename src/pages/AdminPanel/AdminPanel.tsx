@@ -8,7 +8,7 @@ import {
   Grid,
   Typography,
 } from "@mui/material";
-import { type Project, getProjects } from "../../firebase/projects"
+import { type Project, subscribeProjects } from "../../firebase/projects"
 import { logout } from "../../firebase/auth";
 import CreateProjectModal from "./components/CreateProjectModal";
 
@@ -19,24 +19,10 @@ export default function AdminPanel() {
 
   const navigate = useNavigate()
 
-  const fetchProjects = async () => {
-    const projs = await getProjects();
-    setProjects(projs);
-  };
-
   // Fetch projects
   useEffect(() => {
-    let isActive = true;
-
-    getProjects().then((projs) => {
-      if (isActive) {
-        setProjects(projs);
-      }
-    });
-
-    return () => {
-      isActive = false;
-    };
+    const unsubscribe = subscribeProjects(setProjects);
+    return () => unsubscribe();
   }, []);
 
   const handleOpenCreate = () => {
@@ -53,11 +39,7 @@ export default function AdminPanel() {
     await logout();
     navigate("/admin-login")
   }
-
-  // setDescription(project.description);
-  // setRoles(project.roles);
-  // setOpenDialog(true);
-
+  
 return (
   <Box sx={{
     width: {

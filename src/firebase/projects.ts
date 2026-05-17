@@ -1,4 +1,4 @@
-import { collection, addDoc, getDocs, getDoc, updateDoc, doc, Timestamp } from "firebase/firestore";
+import { collection, addDoc, getDocs, getDoc, updateDoc, doc, Timestamp, onSnapshot } from "firebase/firestore";
 import { db } from "./config";
 
 export interface Project {
@@ -24,6 +24,13 @@ export async function createProject(project: Project) {
 export async function getProjects(): Promise<Project[]> {
   const snapshot = await getDocs(collection(db, COLLECTION_NAME));
   return snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() } as Project));
+}
+
+export function subscribeProjects(onChange: (projects: Project[]) => void) {
+  return onSnapshot(collection(db, COLLECTION_NAME), (snapshot) => {
+    const projects = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() } as Project));
+    onChange(projects);
+  });
 }
 
 export async function getProject(id: string): Promise<Project | null> {
