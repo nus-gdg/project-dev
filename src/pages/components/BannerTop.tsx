@@ -7,7 +7,7 @@ const BannerTop: React.FC = () => {
   const navigate = useNavigate();
 
   const handleViewProject = () => {
-    navigate(`../project/1`);
+    navigate(`../signup`);
   };
 
   return (
@@ -20,16 +20,15 @@ const BannerTop: React.FC = () => {
         flexDirection: { xs: "column", sm: "row" },
         alignItems: "center",
         justifyContent: "space-between",
-        position: "sticky",  // 👈 changed from "relative"
-        top: 0,              // 👈 add this
-        zIndex: 100,         // 👈 add this
+        position: "sticky",
+        top: 0,
+        zIndex: 100,
         overflow: "hidden",
         px: 3,
         py: { xs: 2, sm: 0 },
         gap: { xs: 2, sm: 0 },
       }}
     >
-      {/* Background SVG layer */}
       <Box
         sx={{
           position: "absolute",
@@ -41,8 +40,6 @@ const BannerTop: React.FC = () => {
           pointerEvents: "none",
         }}
       />
-
-      {/* Logo */}
       <Box
         component="img"
         src="logo.svg"
@@ -54,7 +51,6 @@ const BannerTop: React.FC = () => {
           zIndex: 1,
         }}
       />
-
       <Button
         onClick={handleViewProject}
         startIcon={<PlayCircleIcon sx={{ fontSize: { xs: "1.4rem !important", sm: "1.8rem !important" } }} />}

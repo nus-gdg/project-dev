@@ -1,4 +1,4 @@
-// Project card component to display title, description and button to view project page
+// Project card component for even indexed project
 import React from "react";
 import { Box, Typography, Button } from "@mui/material";
 import { useNavigate } from "react-router-dom";
@@ -11,7 +11,7 @@ interface ProjectCardProps {
   imageUrl?: string;
 }
 
-const ProjectCard: React.FC<ProjectCardProps> = ({
+const ProjectCardEven: React.FC<ProjectCardProps> = ({
   id,
   title,
   description,
@@ -28,6 +28,7 @@ const ProjectCard: React.FC<ProjectCardProps> = ({
       sx={{
         width: "100%",
         maxWidth: "500px",
+        minHeight: "500px",
         borderRadius: {
           xs: "18px",
           sm: "20px",
@@ -47,22 +48,20 @@ const ProjectCard: React.FC<ProjectCardProps> = ({
       <Box
         sx={{
           width: "100%",
+          height: "100%",
+          flex: 1,
           borderRadius: {
             xs: "18px",
             sm: "20px",
             md: "24px",
           },
           backgroundImage: `url('sprite2.svg'), url('console2.svg')`,
-          backgroundPosition: {
-            xs: "-60% 100%, 170% -30%",
-            sm: "-40% 100%, 145% -30%",
-            md: "-30% 100%, 130% -30%",
-          },
+          backgroundPosition: "-30% 100%, 115% -20%",
           backgroundRepeat: "no-repeat, no-repeat",
           backgroundSize: {
-            xs: "120px, 100px",
-            sm: "160px, 130px",
-            md: "220px, 180px",
+            xs: "130px, 180px",
+            sm: "160px, 190px",
+            md: "220px, 200px",
           },
           p: {
             xs: "14px",
@@ -112,8 +111,6 @@ const ProjectCard: React.FC<ProjectCardProps> = ({
               display: "block",
             }}
           />
-
-          {/* Title */}
           <Typography
             variant="h3"
             sx={{
@@ -135,7 +132,6 @@ const ProjectCard: React.FC<ProjectCardProps> = ({
             {title}
           </Typography>
         </Box>
-
         <Box
           sx={{
             borderRadius: "12px",
@@ -164,7 +160,6 @@ const ProjectCard: React.FC<ProjectCardProps> = ({
             {description}
           </Typography>
         </Box>
-
         <Button
           onClick={handleViewProject}
           startIcon={
@@ -229,4 +224,4 @@ const ProjectCard: React.FC<ProjectCardProps> = ({
   );
 };
 
-export default ProjectCard;
+export default ProjectCardEven;
