@@ -6,7 +6,7 @@ export interface Project {
   title: string;
   description: string;
   roles: string[];
-  imageUrl?: string;
+  imageUrl: string | null;
 }
 
 const COLLECTION_NAME = "projects";
