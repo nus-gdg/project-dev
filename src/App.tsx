@@ -6,7 +6,7 @@ function App() {
 
   return (
     <ThemeProvider theme={mainTheme}>
-      <AppRoutes />;
+      <AppRoutes />
     </ThemeProvider>
   )
 }
