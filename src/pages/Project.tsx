@@ -8,7 +8,12 @@ import EditIcon from "@mui/icons-material/Edit";
 import GroupsIcon from "@mui/icons-material/Groups";
 import PlayArrowIcon from "@mui/icons-material/PlayArrow";
 import SportsEsportsIcon from "@mui/icons-material/SportsEsports";
-import { getProject, type Media, type Project as ProjectRecord } from "../firebase/projects";
+import {
+  getProject,
+  isVideoMedia,
+  type Media,
+  type Project as ProjectRecord,
+} from "../firebase/projects";
 import "./Project.css";
 
 const roleToneClasses = ["is-purple", "is-coral", "is-gold", "is-cyan"];
@@ -64,6 +69,14 @@ function getRoleTone(role: string, index: number) {
   }
 
   return roleToneClasses[index % roleToneClasses.length];
+}
+
+function MediaPreview({ media, alt }: { media: Media; alt: string }) {
+  if (isVideoMedia(media)) {
+    return <video src={media.url} controls playsInline preload="metadata" aria-label={alt} />;
+  }
+
+  return <img src={media.url} alt={alt} />;
 }
 
 function Header({ onBack }: { onBack: () => void }) {
@@ -144,7 +157,10 @@ function ProjectLayout({
         <div className="project-media-card">
           <div className="project-preview-frame">
             {activeMedia ? (
-              <img src={activeMedia.url} alt={`${title} preview ${activeMediaIndex + 1}`} />
+              <MediaPreview
+                media={activeMedia}
+                alt={`${title} preview ${activeMediaIndex + 1}`}
+              />
             ) : (
               <div className="project-preview-placeholder" aria-hidden="true" />
             )}
@@ -186,7 +202,7 @@ function ProjectLayout({
                   ref={mediaIndex === activeMediaIndex ? activeThumbRef : null}
                   onClick={() => setActiveMediaIndex(mediaIndex)}
                 >
-                  <img src={item.url} alt="" />
+                  <MediaPreview media={item} alt="" />
                 </button>
               ))
             ) : (

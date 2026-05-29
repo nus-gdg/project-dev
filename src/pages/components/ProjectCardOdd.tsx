@@ -3,7 +3,7 @@ import React from "react";
 import { Box, Typography, Button } from "@mui/material";
 import { useNavigate } from "react-router-dom";
 import PlayArrowIcon from "@mui/icons-material/PlayCircle";
-import type { Media } from "../../firebase/projects";
+import { isVideoMedia, type Media } from "../../firebase/projects";
 
 interface ProjectCardProps {
   id: string;
@@ -101,17 +101,36 @@ const ProjectCardOdd: React.FC<ProjectCardProps> = ({
             },
           }}
         >
-          <img
-            src={coverImage?.url || "placeholder.png"}
-            alt={title}
-            style={{
-              borderRadius: "14px",
-              width: "80%",
-              height: "80%",
-              objectFit: "cover",
-              display: "block",
-            }}
-          />
+          {coverImage && isVideoMedia(coverImage) ? (
+            <video
+              src={coverImage.url}
+              autoPlay
+              muted
+              loop
+              playsInline
+              preload="metadata"
+              aria-label={title}
+              style={{
+                borderRadius: "14px",
+                width: "80%",
+                height: "80%",
+                objectFit: "cover",
+                display: "block",
+              }}
+            />
+          ) : (
+            <img
+              src={coverImage?.url || "placeholder.png"}
+              alt={title}
+              style={{
+                borderRadius: "14px",
+                width: "80%",
+                height: "80%",
+                objectFit: "cover",
+                display: "block",
+              }}
+            />
+          )}
           <Typography
             variant="h3"
             sx={{

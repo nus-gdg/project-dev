@@ -1,16 +1,32 @@
-import { useRef, useState } from "react";
+import { useRef, useState, type ReactElement } from "react";
 import imageCompression from "browser-image-compression";
 import { storage } from "../../../firebase/config";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import RecruitingInput from "./RecruitingInput";
 import {
-  Dialog, DialogTitle, DialogContent, DialogActions,
-  Button, Stack, TextField, Paper, Box, CircularProgress,
-  IconButton, Typography,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  Button,
+  Stack,
+  TextField,
+  Paper,
+  Box,
+  CircularProgress,
+  IconButton,
+  Typography,
 } from "@mui/material";
 import CloudUploadIcon from "@mui/icons-material/CloudUpload";
 import CloseIcon from "@mui/icons-material/Close";
-import { type Media, type Project, createProject, updateProject } from "../../../firebase/projects";
+import {
+  type Media,
+  type Project,
+  createProject,
+  getMediaKind,
+  isVideoMedia,
+  updateProject,
+} from "../../../firebase/projects";
 
 interface Props {
   open: boolean;
@@ -18,7 +34,7 @@ interface Props {
   project: Project | null;
 }
 
-interface ImageItem {
+interface MediaItem {
   id: string;
   url: string;
   file?: File;
@@ -34,10 +50,11 @@ function mediaFromUrl(url: string): Media {
     url,
     path: "",
     filename: "legacy-project-image",
+    kind: getMediaKind({ url, filename: "legacy-project-image" }),
   };
 }
 
-function getInitialCoverImage(project: Project | null): ImageItem | null {
+function getInitialCoverImage(project: Project | null): MediaItem | null {
   if (!project) return null;
 
   const coverImage = project.coverImage;
@@ -50,7 +67,7 @@ function getInitialCoverImage(project: Project | null): ImageItem | null {
   };
 }
 
-function getInitialOtherMedia(project: Project | null): ImageItem[] {
+function getInitialOtherMedia(project: Project | null): MediaItem[] {
   if (!project) return [];
 
   return (project.otherMedia ?? []).map((item) => ({
@@ -60,34 +77,48 @@ function getInitialOtherMedia(project: Project | null): ImageItem[] {
   }));
 }
 
+function renderMediaPreview(item: MediaItem, alt: string): ReactElement {
+  const isVideo = item.file ? item.file.type.startsWith("video/") : item.media ? isVideoMedia(item.media) : false;
+
+  if (isVideo) {
+    return <video src={item.url} controls playsInline preload="metadata" aria-label={alt} />;
+  }
+
+  return <img src={item.url} alt={alt} />;
+}
+
 export default function CreateProjectModal({ open, onClose, project }: Props) {
   const isEditing = project !== null;
 
   const [title, setTitle] = useState<string>(project?.title ?? "");
   const [description, setDescription] = useState<string>(project?.description ?? "");
   const [roles, setRoles] = useState<string[]>(project?.roles ?? []);
-  const [coverImage, setCoverImage] = useState<ImageItem | null>(() => getInitialCoverImage(project));
-  const [otherMedia, setOtherMedia] = useState<ImageItem[]>(() => getInitialOtherMedia(project));
+  const [coverImage, setCoverImage] = useState<MediaItem | null>(() => getInitialCoverImage(project));
+  const [otherMedia, setOtherMedia] = useState<MediaItem[]>(() => getInitialOtherMedia(project));
   const [imageUploading, setImageUploading] = useState<boolean>(false);
 
   const coverInputRef = useRef<HTMLInputElement>(null);
   const mediaInputRef = useRef<HTMLInputElement>(null);
 
   async function uploadProjectImage(file: File, folderId: string, index: number): Promise<Media> {
-    const compressed = await imageCompression(file, {
-      maxSizeMB: 0.5,
-      maxWidthOrHeight: 1200,
-      useWebWorker: true,
-      fileType: "image/webp",
-    });
-
     const baseName = file.name.replace(/\.[^/.]+$/, "").replace(/[^a-z0-9-_]+/gi, "-").toLowerCase();
-    const filename = `${baseName || "project-image"}-${Date.now()}-${index}.webp`;
+    const isVideo = file.type === "video/mp4" || file.type === "video/webm";
+    const filename = isVideo
+      ? `${baseName || "project-video"}-${Date.now()}-${index}.${file.type === "video/webm" ? "webm" : "mp4"}`
+      : `${baseName || "project-image"}-${Date.now()}-${index}.webp`;
     const path = `projects/${folderId}/${index === 0 ? "cover" : "media"}/${filename}`;
     const storageRef = ref(storage, path);
+    const uploadedFile = isVideo
+      ? file
+      : await imageCompression(file, {
+          maxSizeMB: 0.5,
+          maxWidthOrHeight: 1200,
+          useWebWorker: true,
+          fileType: "image/webp",
+        });
 
-    await uploadBytes(storageRef, compressed, {
-      contentType: "image/webp",
+    await uploadBytes(storageRef, uploadedFile, {
+      contentType: isVideo ? file.type : "image/webp",
       cacheControl: "public, max-age=31536000",
     });
 
@@ -95,6 +126,7 @@ export default function CreateProjectModal({ open, onClose, project }: Props) {
       url: await getDownloadURL(storageRef),
       path,
       filename,
+      kind: isVideo ? "video" : "image",
     };
   }
 
@@ -250,7 +282,7 @@ export default function CreateProjectModal({ open, onClose, project }: Props) {
           <input
             ref={coverInputRef}
             type="file"
-            accept="image/*"
+            accept="image/*,video/mp4,video/webm"
             style={{ display: "none" }}
             onChange={handleCoverPick}
           />
@@ -258,7 +290,7 @@ export default function CreateProjectModal({ open, onClose, project }: Props) {
           <input
             ref={mediaInputRef}
             type="file"
-            accept="image/*"
+            accept="image/*,video/mp4,video/webm"
             multiple
             style={{ display: "none" }}
             onChange={handleMediaPick}
@@ -283,19 +315,25 @@ export default function CreateProjectModal({ open, onClose, project }: Props) {
           {coverImage ? (
             <Box sx={{ position: "relative", width: "100%", maxWidth: 520 }}>
               <Box
-                component="img"
-                src={coverImage.url}
-                alt="Cover preview"
                 sx={{
                   width: "100%",
                   maxHeight: 220,
-                  objectFit: "cover",
+                  aspectRatio: "16 / 9",
+                  overflow: "hidden",
                   borderRadius: 2,
                   border: "1px solid",
                   borderColor: "divider",
                   display: "block",
+                  "& img, & video": {
+                    width: "100%",
+                    height: "100%",
+                    objectFit: "cover",
+                    display: "block",
+                  },
                 }}
-              />
+              >
+                {renderMediaPreview(coverImage, "Cover preview")}
+              </Box>
               <IconButton
                 size="small"
                 onClick={handleRemoveCover}
@@ -329,10 +367,10 @@ export default function CreateProjectModal({ open, onClose, project }: Props) {
             >
               <CloudUploadIcon color="action" />
               <Typography variant="body2" color="text.secondary">
-                Click to upload a cover image
+                Click to upload a cover image or video
               </Typography>
               <Typography variant="caption" color="text.disabled">
-                PNG, JPG, WEBP - compressed automatically
+                PNG, JPG, WEBP, MP4, WEBM - images are compressed automatically
               </Typography>
             </Box>
           )}
@@ -366,19 +404,24 @@ export default function CreateProjectModal({ open, onClose, project }: Props) {
               {otherMedia.map((image, index) => (
                 <Box key={image.id} sx={{ position: "relative" }}>
                   <Box
-                    component="img"
-                    src={image.url}
-                    alt={`Project media preview ${index + 1}`}
                     sx={{
                       width: "100%",
                       aspectRatio: "4 / 3",
-                      objectFit: "cover",
+                      overflow: "hidden",
                       borderRadius: 2,
                       border: "1px solid",
                       borderColor: "divider",
                       display: "block",
+                      "& img, & video": {
+                        width: "100%",
+                        height: "100%",
+                        objectFit: "cover",
+                        display: "block",
+                      },
                     }}
-                  />
+                  >
+                    {renderMediaPreview(image, `Project media preview ${index + 1}`)}
+                  </Box>
                   <IconButton
                     size="small"
                     onClick={() => handleRemoveMedia(image.id)}
@@ -414,10 +457,10 @@ export default function CreateProjectModal({ open, onClose, project }: Props) {
             >
               <CloudUploadIcon color="action" />
               <Typography variant="body2" color="text.secondary">
-                Click to upload additional images
+                Click to upload additional images or videos
               </Typography>
               <Typography variant="caption" color="text.disabled">
-                PNG, JPG, WEBP - compressed automatically
+                PNG, JPG, WEBP, MP4, WEBM - images are compressed automatically
               </Typography>
             </Box>
           )}
