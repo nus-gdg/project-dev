@@ -74,7 +74,7 @@ export default function Home() {
                                 id={project.id ?? ""}
                                 title={project.title}
                                 description={project.description}
-                                imageUrl={project.imageUrl}
+                                coverImage={project.coverImage}
                             />
                         ) : (
                             <ProjectCardEven
@@ -82,7 +82,7 @@ export default function Home() {
                                 id={project.id ?? ""}
                                 title={project.title}
                                 description={project.description}
-                                imageUrl={project.imageUrl}
+                                coverImage={project.coverImage}
                             />
                         )
                     )}

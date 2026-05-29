@@ -3,19 +3,20 @@ import React from "react";
 import { Box, Typography, Button } from "@mui/material";
 import { useNavigate } from "react-router-dom";
 import PlayArrowIcon from "@mui/icons-material/PlayCircle";
+import type { Media } from "../../firebase/projects";
 
 interface ProjectCardProps {
   id: string;
   title: string;
   description: string;
-  imageUrl?: string;
+  coverImage: Media | null;
 }
 
 const ProjectCardOdd: React.FC<ProjectCardProps> = ({
   id,
   title,
   description,
-  imageUrl,
+  coverImage,
 }) => {
   const navigate = useNavigate();
 
@@ -101,7 +102,7 @@ const ProjectCardOdd: React.FC<ProjectCardProps> = ({
           }}
         >
           <img
-            src={imageUrl || "placeholder.png"}
+            src={coverImage?.url || "placeholder.png"}
             alt={title}
             style={{
               borderRadius: "14px",

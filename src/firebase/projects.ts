@@ -1,12 +1,19 @@
-import { collection, addDoc, getDocs, getDoc, updateDoc, doc, Timestamp, onSnapshot } from "firebase/firestore";
+import { collection, addDoc, getDocs, getDoc, updateDoc, doc, Timestamp, onSnapshot, deleteField } from "firebase/firestore";
 import { db } from "./config";
+
+export interface Media {
+  url: string;
+  path: string;
+  filename: string;
+}
 
 export interface Project {
   id?: string;
   title: string;
   description: string;
   roles: string[];
-  imageUrl: string | null;
+  coverImage: Media | null;
+  otherMedia: Media[];
 }
 
 const COLLECTION_NAME = "projects";
@@ -49,6 +56,8 @@ export async function updateProject(id: string, project: Project) {
     title: project.title,
     description: project.description,
     roles: project.roles,
+    coverImage: project.coverImage,
+    otherMedia: project.otherMedia,
   };
   await updateDoc(docRef, updateData);
 }

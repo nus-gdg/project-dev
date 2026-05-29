@@ -9,13 +9,13 @@ import {
 } from "@mui/material";
 
 export default function ProjectCard({ project, onEdit }: { project: Project; onEdit: (project: Project) => void }) {
-    const imageUrl = project.imageUrl;
+    const coverImageUrl = project.coverImage?.url;
     const navigate = useNavigate();
 
     return <div className="admin-project-card"> 
         <div className="thumbnail-container">
-            {imageUrl ? (
-                <img src={imageUrl} alt={`${project.title} thumbnail`} />
+            {coverImageUrl ? (
+                <img src={coverImageUrl} alt={`${project.title} thumbnail`} />
             ) : (
                 <div className="thumbnail-placeholder">No project image</div>
             )}
