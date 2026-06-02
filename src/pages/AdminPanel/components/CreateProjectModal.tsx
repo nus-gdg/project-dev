@@ -23,7 +23,6 @@ import {
   type Media,
   type Project,
   createProject,
-  getMediaKind,
   isVideoMedia,
   updateProject,
 } from "../../../firebase/projects";
@@ -43,15 +42,6 @@ interface MediaItem {
 
 function makeImageId(): string {
   return `${Date.now()}-${Math.random().toString(36).slice(2)}`;
-}
-
-function mediaFromUrl(url: string): Media {
-  return {
-    url,
-    path: "",
-    filename: "legacy-project-image",
-    kind: getMediaKind({ url, filename: "legacy-project-image" }),
-  };
 }
 
 function getInitialCoverImage(project: Project | null): MediaItem | null {
@@ -87,6 +77,14 @@ function renderMediaPreview(item: MediaItem, alt: string): ReactElement {
   return <img src={item.url} alt={alt} />;
 }
 
+function getExistingMedia(item: MediaItem): Media {
+  if (!item.media) {
+    throw new Error("Existing project media is missing its saved media fields.");
+  }
+
+  return item.media;
+}
+
 export default function CreateProjectModal({ open, onClose, project }: Props) {
   const isEditing = project !== null;
 
@@ -100,7 +98,7 @@ export default function CreateProjectModal({ open, onClose, project }: Props) {
   const coverInputRef = useRef<HTMLInputElement>(null);
   const mediaInputRef = useRef<HTMLInputElement>(null);
 
-  async function uploadProjectImage(file: File, folderId: string, index: number): Promise<Media> {
+  async function uploadProjectMedia(file: File, folderId: string, index: number): Promise<Media> {
     const baseName = file.name.replace(/\.[^/.]+$/, "").replace(/[^a-z0-9-_]+/gi, "-").toLowerCase();
     const isVideo = file.type === "video/mp4" || file.type === "video/webm";
     const filename = isVideo
@@ -186,13 +184,13 @@ export default function CreateProjectModal({ open, onClose, project }: Props) {
       const folderId = project?.id ?? `draft-${Date.now()}`;
       const savedCoverImage = coverImage
         ? coverImage.file
-          ? await uploadProjectImage(coverImage.file, folderId, 0)
-          : coverImage.media ?? mediaFromUrl(coverImage.url)
+          ? await uploadProjectMedia(coverImage.file, folderId, 0)
+          : getExistingMedia(coverImage)
         : null;
       const savedOtherMedia = await Promise.all(
         otherMedia.map((image, index) => {
-          if (image.file) return uploadProjectImage(image.file, folderId, index + 1);
-          return Promise.resolve(image.media ?? mediaFromUrl(image.url));
+          if (image.file) return uploadProjectMedia(image.file, folderId, index + 1);
+          return Promise.resolve(getExistingMedia(image));
         }),
       );
 
@@ -370,7 +368,7 @@ export default function CreateProjectModal({ open, onClose, project }: Props) {
                 Click to upload a cover image or video
               </Typography>
               <Typography variant="caption" color="text.disabled">
-                PNG, JPG, WEBP, MP4, WEBM - images are compressed automatically
+                PNG, JPG, WEBP, MP4, WEBM
               </Typography>
             </Box>
           )}
@@ -460,7 +458,7 @@ export default function CreateProjectModal({ open, onClose, project }: Props) {
                 Click to upload additional images or videos
               </Typography>
               <Typography variant="caption" color="text.disabled">
-                PNG, JPG, WEBP, MP4, WEBM - images are compressed automatically
+                PNG, JPG, WEBP, MP4, WEBM
               </Typography>
             </Box>
           )}

@@ -71,9 +71,26 @@ function getRoleTone(role: string, index: number) {
   return roleToneClasses[index % roleToneClasses.length];
 }
 
-function MediaPreview({ media, alt }: { media: Media; alt: string }) {
+function MediaPreview({
+  media,
+  alt,
+  controls = false,
+}: {
+  media: Media;
+  alt: string;
+  controls?: boolean;
+}) {
   if (isVideoMedia(media)) {
-    return <video src={media.url} controls playsInline preload="metadata" aria-label={alt} />;
+    return (
+      <video
+        src={media.url}
+        controls={controls}
+        muted={!controls}
+        playsInline
+        preload="metadata"
+        aria-label={alt}
+      />
+    );
   }
 
   return <img src={media.url} alt={alt} />;
@@ -160,6 +177,7 @@ function ProjectLayout({
               <MediaPreview
                 media={activeMedia}
                 alt={`${title} preview ${activeMediaIndex + 1}`}
+                controls
               />
             ) : (
               <div className="project-preview-placeholder" aria-hidden="true" />
@@ -203,6 +221,11 @@ function ProjectLayout({
                   onClick={() => setActiveMediaIndex(mediaIndex)}
                 >
                   <MediaPreview media={item} alt="" />
+                  {isVideoMedia(item) ? (
+                    <span className="project-thumb-play" aria-hidden="true">
+                      <PlayArrowIcon fontSize="small" />
+                    </span>
+                  ) : null}
                 </button>
               ))
             ) : (

@@ -7,22 +7,11 @@ export interface Media {
   url: string;
   path: string;
   filename: string;
-  kind?: MediaKind;
-}
-
-function isVideoFilename(value: string): boolean {
-  return /\.(mp4|webm)(\?|#|$)/i.test(value);
-}
-
-export function getMediaKind(media: Pick<Media, "url" | "filename" | "kind">): MediaKind {
-  if (media.kind) return media.kind;
-
-  const source = `${media.filename} ${media.url}`;
-  return isVideoFilename(source) ? "video" : "image";
+  kind: MediaKind;
 }
 
 export function isVideoMedia(media: Media | null | undefined): boolean {
-  return media ? getMediaKind(media) === "video" : false;
+  return media?.kind === "video";
 }
 
 export interface Project {
