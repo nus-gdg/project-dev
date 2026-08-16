@@ -1,31 +1,31 @@
-import { useRef, useState, type ReactElement } from "react";
+import { useState, type ChangeEvent } from "react";
 import imageCompression from "browser-image-compression";
-import { storage } from "../../../firebase/config";
-import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
-import RecruitingInput from "./RecruitingInput";
+import { getDownloadURL, ref, uploadBytes } from "firebase/storage";
 import {
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
   Button,
+  CircularProgress,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
+  Paper,
   Stack,
   TextField,
-  Paper,
-  Box,
-  CircularProgress,
-  IconButton,
-  Typography,
 } from "@mui/material";
-import CloudUploadIcon from "@mui/icons-material/CloudUpload";
-import CloseIcon from "@mui/icons-material/Close";
+import { storage } from "../../../firebase/config";
 import {
+  createProject,
   type Media,
   type Project,
-  createProject,
-  isVideoMedia,
   updateProject,
 } from "../../../firebase/projects";
+import CoverImageUpload from "./CoverImageUpload";
+import OtherMediaUpload from "./OtherMediaUpload";
+import RecruitingInput from "./RecruitingInput";
+import type { MediaItem } from "./mediaUploadTypes";
+
+const MAX_IMAGE_SIZE_MB = 0.5;
+const MAX_IMAGE_DIMENSION = 1200;
 
 interface Props {
   open: boolean;
@@ -33,48 +33,41 @@ interface Props {
   project: Project | null;
 }
 
-interface MediaItem {
-  id: string;
-  url: string;
-  file?: File;
-  media?: Media;
-}
-
-function makeImageId(): string {
+function makeMediaItemId(): string {
   return `${Date.now()}-${Math.random().toString(36).slice(2)}`;
 }
 
-function getInitialCoverImage(project: Project | null): MediaItem | null {
-  if (!project) return null;
+function createLocalMediaItem(file: File): MediaItem {
+  return {
+    id: makeMediaItemId(),
+    url: URL.createObjectURL(file),
+    file,
+  };
+}
 
-  const coverImage = project.coverImage;
+function revokeLocalMediaUrl(item: MediaItem | null): void {
+  if (item?.file) {
+    URL.revokeObjectURL(item.url);
+  }
+}
+
+function getInitialCoverImage(project: Project | null): MediaItem | null {
+  const coverImage = project?.coverImage;
   if (!coverImage) return null;
 
   return {
-    id: makeImageId(),
+    id: makeMediaItemId(),
     url: coverImage.url,
     media: coverImage,
   };
 }
 
 function getInitialOtherMedia(project: Project | null): MediaItem[] {
-  if (!project) return [];
-
-  return (project.otherMedia ?? []).map((item) => ({
-    id: makeImageId(),
+  return (project?.otherMedia ?? []).map((item) => ({
+    id: makeMediaItemId(),
     url: item.url,
     media: item,
   }));
-}
-
-function renderMediaPreview(item: MediaItem, alt: string): ReactElement {
-  const isVideo = item.file ? item.file.type.startsWith("video/") : item.media ? isVideoMedia(item.media) : false;
-
-  if (isVideo) {
-    return <video src={item.url} controls playsInline preload="metadata" aria-label={alt} />;
-  }
-
-  return <img src={item.url} alt={alt} />;
 }
 
 function getExistingMedia(item: MediaItem): Media {
@@ -85,113 +78,111 @@ function getExistingMedia(item: MediaItem): Media {
   return item.media;
 }
 
+async function uploadProjectMedia(file: File, folderId: string, index: number): Promise<Media> {
+  const baseName = file.name
+    .replace(/\.[^/.]+$/, "")
+    .replace(/[^a-z0-9-_]+/gi, "-")
+    .toLowerCase();
+  const isVideo = file.type === "video/mp4" || file.type === "video/webm";
+  const filename = isVideo
+    ? `${baseName || "project-video"}-${Date.now()}-${index}.${file.type === "video/webm" ? "webm" : "mp4"}`
+    : `${baseName || "project-image"}-${Date.now()}-${index}.webp`;
+  const path = `projects/${folderId}/${index === 0 ? "cover" : "media"}/${filename}`;
+  const storageRef = ref(storage, path);
+  const uploadedFile = isVideo
+    ? file
+    : await imageCompression(file, {
+        maxSizeMB: MAX_IMAGE_SIZE_MB,
+        maxWidthOrHeight: MAX_IMAGE_DIMENSION,
+        useWebWorker: true,
+        fileType: "image/webp",
+      });
+
+  await uploadBytes(storageRef, uploadedFile, {
+    contentType: isVideo ? file.type : "image/webp",
+    cacheControl: "public, max-age=31536000",
+  });
+
+  return {
+    url: await getDownloadURL(storageRef),
+    path,
+    filename,
+    kind: isVideo ? "video" : "image",
+  };
+}
+
+async function saveMediaItem(item: MediaItem, folderId: string, index: number): Promise<Media> {
+  return item.file ? uploadProjectMedia(item.file, folderId, index) : getExistingMedia(item);
+}
+
 export default function CreateProjectModal({ open, onClose, project }: Props) {
   const isEditing = project !== null;
 
-  const [title, setTitle] = useState<string>(project?.title ?? "");
-  const [description, setDescription] = useState<string>(project?.description ?? "");
+  const [title, setTitle] = useState(project?.title ?? "");
+  const [description, setDescription] = useState(project?.description ?? "");
   const [roles, setRoles] = useState<string[]>(project?.roles ?? []);
   const [coverImage, setCoverImage] = useState<MediaItem | null>(() => getInitialCoverImage(project));
   const [otherMedia, setOtherMedia] = useState<MediaItem[]>(() => getInitialOtherMedia(project));
-  const [imageUploading, setImageUploading] = useState<boolean>(false);
+  const [isSaving, setIsSaving] = useState(false);
 
-  const coverInputRef = useRef<HTMLInputElement>(null);
-  const mediaInputRef = useRef<HTMLInputElement>(null);
-
-  async function uploadProjectMedia(file: File, folderId: string, index: number): Promise<Media> {
-    const baseName = file.name.replace(/\.[^/.]+$/, "").replace(/[^a-z0-9-_]+/gi, "-").toLowerCase();
-    const isVideo = file.type === "video/mp4" || file.type === "video/webm";
-    const filename = isVideo
-      ? `${baseName || "project-video"}-${Date.now()}-${index}.${file.type === "video/webm" ? "webm" : "mp4"}`
-      : `${baseName || "project-image"}-${Date.now()}-${index}.webp`;
-    const path = `projects/${folderId}/${index === 0 ? "cover" : "media"}/${filename}`;
-    const storageRef = ref(storage, path);
-    const uploadedFile = isVideo
-      ? file
-      : await imageCompression(file, {
-          maxSizeMB: 0.5,
-          maxWidthOrHeight: 1200,
-          useWebWorker: true,
-          fileType: "image/webp",
-        });
-
-    await uploadBytes(storageRef, uploadedFile, {
-      contentType: isVideo ? file.type : "image/webp",
-      cacheControl: "public, max-age=31536000",
-    });
-
-    return {
-      url: await getDownloadURL(storageRef),
-      path,
-      filename,
-      kind: isVideo ? "video" : "image",
-    };
-  }
-
-  function handleCoverPick(e: React.ChangeEvent<HTMLInputElement>): void {
-    const file = e.target.files?.[0];
+  function handleCoverPick(event: ChangeEvent<HTMLInputElement>): void {
+    const file = event.target.files?.[0];
     if (!file) return;
 
     setCoverImage((currentCover) => {
-      if (currentCover?.file) URL.revokeObjectURL(currentCover.url);
-
-      return {
-        id: makeImageId(),
-        url: URL.createObjectURL(file),
-        file,
-      };
+      revokeLocalMediaUrl(currentCover);
+      return createLocalMediaItem(file);
     });
 
-    if (coverInputRef.current) coverInputRef.current.value = "";
+    event.target.value = "";
   }
 
-  function handleMediaPick(e: React.ChangeEvent<HTMLInputElement>): void {
-    const pickedFiles = Array.from(e.target.files ?? []);
+  function handleMediaPick(event: ChangeEvent<HTMLInputElement>): void {
+    const pickedFiles = Array.from(event.target.files ?? []);
     if (pickedFiles.length === 0) return;
 
     setOtherMedia((currentMedia) => [
       ...currentMedia,
-      ...pickedFiles.map((file) => ({
-        id: makeImageId(),
-        url: URL.createObjectURL(file),
-        file,
-      })),
+      ...pickedFiles.map(createLocalMediaItem),
     ]);
 
-    if (mediaInputRef.current) mediaInputRef.current.value = "";
+    event.target.value = "";
   }
 
   function handleRemoveCover(): void {
     setCoverImage((currentCover) => {
-      if (currentCover?.file) URL.revokeObjectURL(currentCover.url);
+      revokeLocalMediaUrl(currentCover);
       return null;
     });
   }
 
   function handleRemoveMedia(id: string): void {
     setOtherMedia((currentMedia) => {
-      const mediaToRemove = currentMedia.find((image) => image.id === id);
-      if (mediaToRemove?.file) URL.revokeObjectURL(mediaToRemove.url);
+      const mediaToRemove = currentMedia.find((item) => item.id === id);
+      revokeLocalMediaUrl(mediaToRemove ?? null);
 
-      return currentMedia.filter((image) => image.id !== id);
+      return currentMedia.filter((item) => item.id !== id);
     });
+  }
+
+  function releaseLocalObjectUrls(): void {
+    revokeLocalMediaUrl(coverImage);
+    otherMedia.forEach(revokeLocalMediaUrl);
+  }
+
+  function handleClose(): void {
+    releaseLocalObjectUrls();
+    onClose();
   }
 
   async function handleSave(): Promise<void> {
     try {
-      setImageUploading(true);
+      setIsSaving(true);
 
       const folderId = project?.id ?? `draft-${Date.now()}`;
-      const savedCoverImage = coverImage
-        ? coverImage.file
-          ? await uploadProjectMedia(coverImage.file, folderId, 0)
-          : getExistingMedia(coverImage)
-        : null;
+      const savedCoverImage = coverImage ? await saveMediaItem(coverImage, folderId, 0) : null;
       const savedOtherMedia = await Promise.all(
-        otherMedia.map((image, index) => {
-          if (image.file) return uploadProjectMedia(image.file, folderId, index + 1);
-          return Promise.resolve(getExistingMedia(image));
-        }),
+        otherMedia.map((item, index) => saveMediaItem(item, folderId, index + 1)),
       );
 
       const projectPayload: Project = {
@@ -212,16 +203,8 @@ export default function CreateProjectModal({ open, onClose, project }: Props) {
     } catch (err) {
       console.error("Save failed:", err);
     } finally {
-      setImageUploading(false);
+      setIsSaving(false);
     }
-  }
-
-  function handleClose(): void {
-    if (coverImage?.file) URL.revokeObjectURL(coverImage.url);
-    otherMedia.forEach((image) => {
-      if (image.file) URL.revokeObjectURL(image.url);
-    });
-    onClose();
   }
 
   return (
@@ -246,7 +229,9 @@ export default function CreateProjectModal({ open, onClose, project }: Props) {
         },
       }}
     >
-      <DialogTitle sx={{ flexShrink: 0 }}>{isEditing ? "Edit Project" : "Create Project"}</DialogTitle>
+      <DialogTitle sx={{ flexShrink: 0 }}>
+        {isEditing ? "Edit Project" : "Create Project"}
+      </DialogTitle>
 
       <DialogContent
         dividers
@@ -261,14 +246,14 @@ export default function CreateProjectModal({ open, onClose, project }: Props) {
           <TextField
             label="Title"
             value={title}
-            onChange={(e) => setTitle(e.target.value)}
+            onChange={(event) => setTitle(event.target.value)}
             fullWidth
           />
 
           <TextField
             label="Description"
             value={description}
-            onChange={(e) => setDescription(e.target.value)}
+            onChange={(event) => setDescription(event.target.value)}
             multiline
             minRows={3}
             maxRows={15}
@@ -277,205 +262,31 @@ export default function CreateProjectModal({ open, onClose, project }: Props) {
 
           <RecruitingInput roles={roles} setRoles={setRoles} />
 
-          <input
-            ref={coverInputRef}
-            type="file"
-            accept="image/*,video/mp4,video/webm"
-            style={{ display: "none" }}
-            onChange={handleCoverPick}
+          <CoverImageUpload
+            coverImage={coverImage}
+            onPick={handleCoverPick}
+            onRemove={handleRemoveCover}
           />
 
-          <input
-            ref={mediaInputRef}
-            type="file"
-            accept="image/*,video/mp4,video/webm"
-            multiple
-            style={{ display: "none" }}
-            onChange={handleMediaPick}
+          <OtherMediaUpload
+            otherMedia={otherMedia}
+            onPick={handleMediaPick}
+            onRemove={handleRemoveMedia}
           />
-
-          <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 2 }}>
-            <Typography variant="body1">
-              <b>Cover Image</b>
-            </Typography>
-            {coverImage ? (
-              <Button
-                size="small"
-                variant="outlined"
-                startIcon={<CloudUploadIcon />}
-                onClick={() => coverInputRef.current?.click()}
-              >
-                Replace cover
-              </Button>
-            ) : null}
-          </Box>
-
-          {coverImage ? (
-            <Box sx={{ position: "relative", width: "100%", maxWidth: 520 }}>
-              <Box
-                sx={{
-                  width: "100%",
-                  maxHeight: 220,
-                  aspectRatio: "16 / 9",
-                  overflow: "hidden",
-                  borderRadius: 2,
-                  border: "1px solid",
-                  borderColor: "divider",
-                  display: "block",
-                  "& img, & video": {
-                    width: "100%",
-                    height: "100%",
-                    objectFit: "cover",
-                    display: "block",
-                  },
-                }}
-              >
-                {renderMediaPreview(coverImage, "Cover preview")}
-              </Box>
-              <IconButton
-                size="small"
-                onClick={handleRemoveCover}
-                sx={{
-                  position: "absolute",
-                  top: 6,
-                  right: 6,
-                  bgcolor: "rgba(0,0,0,0.55)",
-                  color: "white",
-                  "&:hover": { bgcolor: "rgba(0,0,0,0.75)" },
-                }}
-              >
-                <CloseIcon fontSize="small" />
-              </IconButton>
-            </Box>
-          ) : (
-            <Box
-              onClick={() => coverInputRef.current?.click()}
-              sx={{
-                border: "1.5px dashed",
-                borderColor: "divider",
-                borderRadius: 2,
-                p: 3,
-                display: "flex",
-                flexDirection: "column",
-                alignItems: "center",
-                gap: 1,
-                cursor: "pointer",
-                "&:hover": { bgcolor: "action.hover" },
-              }}
-            >
-              <CloudUploadIcon color="action" />
-              <Typography variant="body2" color="text.secondary">
-                Click to upload a cover image or video
-              </Typography>
-              <Typography variant="caption" color="text.disabled">
-                PNG, JPG, WEBP, MP4, WEBM
-              </Typography>
-            </Box>
-          )}
-
-          <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 2 }}>
-            <Typography variant="body1">
-              <b>Other Media</b>
-            </Typography>
-            {otherMedia.length > 0 ? (
-              <Button
-                size="small"
-                variant="outlined"
-                startIcon={<CloudUploadIcon />}
-                onClick={() => mediaInputRef.current?.click()}
-              >
-                Add media
-              </Button>
-            ) : null}
-          </Box>
-
-          {otherMedia.length > 0 ? (
-            <Box
-              sx={{
-                display: "grid",
-                gridTemplateColumns: "repeat(auto-fill, minmax(140px, 1fr))",
-                gap: 1.5,
-                width: "100%",
-                maxWidth: 520,
-              }}
-            >
-              {otherMedia.map((image, index) => (
-                <Box key={image.id} sx={{ position: "relative" }}>
-                  <Box
-                    sx={{
-                      width: "100%",
-                      aspectRatio: "4 / 3",
-                      overflow: "hidden",
-                      borderRadius: 2,
-                      border: "1px solid",
-                      borderColor: "divider",
-                      display: "block",
-                      "& img, & video": {
-                        width: "100%",
-                        height: "100%",
-                        objectFit: "cover",
-                        display: "block",
-                      },
-                    }}
-                  >
-                    {renderMediaPreview(image, `Project media preview ${index + 1}`)}
-                  </Box>
-                  <IconButton
-                    size="small"
-                    onClick={() => handleRemoveMedia(image.id)}
-                    sx={{
-                      position: "absolute",
-                      top: 6,
-                      right: 6,
-                      bgcolor: "rgba(0,0,0,0.55)",
-                      color: "white",
-                      "&:hover": { bgcolor: "rgba(0,0,0,0.75)" },
-                    }}
-                  >
-                    <CloseIcon fontSize="small" />
-                  </IconButton>
-                </Box>
-              ))}
-            </Box>
-          ) : (
-            <Box
-              onClick={() => mediaInputRef.current?.click()}
-              sx={{
-                border: "1.5px dashed",
-                borderColor: "divider",
-                borderRadius: 2,
-                p: 3,
-                display: "flex",
-                flexDirection: "column",
-                alignItems: "center",
-                gap: 1,
-                cursor: "pointer",
-                "&:hover": { bgcolor: "action.hover" },
-              }}
-            >
-              <CloudUploadIcon color="action" />
-              <Typography variant="body2" color="text.secondary">
-                Click to upload additional images or videos
-              </Typography>
-              <Typography variant="caption" color="text.disabled">
-                PNG, JPG, WEBP, MP4, WEBM
-              </Typography>
-            </Box>
-          )}
         </Stack>
       </DialogContent>
 
       <DialogActions sx={{ flexShrink: 0 }}>
-        <Button onClick={handleClose} disabled={imageUploading}>
+        <Button onClick={handleClose} disabled={isSaving}>
           Cancel
         </Button>
         <Button
           onClick={handleSave}
           variant="contained"
-          disabled={imageUploading}
-          startIcon={imageUploading ? <CircularProgress size={16} /> : null}
+          disabled={isSaving}
+          startIcon={isSaving ? <CircularProgress size={16} /> : null}
         >
-          {imageUploading ? "Saving..." : isEditing ? "Save Changes" : "Create"}
+          {isSaving ? "Saving..." : isEditing ? "Save Changes" : "Create"}
         </Button>
       </DialogActions>
     </Dialog>

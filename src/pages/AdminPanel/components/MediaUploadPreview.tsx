@@ -1,0 +1,138 @@
+import type { ReactElement } from "react";
+import {
+  Box,
+  Button,
+  IconButton,
+  Typography,
+} from "@mui/material";
+import CloudUploadIcon from "@mui/icons-material/CloudUpload";
+import CloseIcon from "@mui/icons-material/Close";
+import { isVideoMedia } from "../../../firebase/projects";
+import type { MediaItem } from "./mediaUploadTypes";
+
+export const ACCEPTED_MEDIA_TYPES = "image/*,video/mp4,video/webm";
+
+function isVideoItem(item: MediaItem): boolean {
+  if (item.file) return item.file.type.startsWith("video/");
+  return isVideoMedia(item.media);
+}
+
+function renderMediaPreview(item: MediaItem, alt: string): ReactElement {
+  if (isVideoItem(item)) {
+    return <video src={item.url} controls playsInline preload="metadata" aria-label={alt} />;
+  }
+
+  return <img src={item.url} alt={alt} />;
+}
+
+export function SectionHeader({
+  title,
+  actionLabel,
+  showAction,
+  onAction,
+}: {
+  title: string;
+  actionLabel: string;
+  showAction: boolean;
+  onAction: () => void;
+}) {
+  return (
+    <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 2 }}>
+      <Typography variant="body1">
+        <b>{title}</b>
+      </Typography>
+      {showAction ? (
+        <Button size="small" variant="outlined" startIcon={<CloudUploadIcon />} onClick={onAction}>
+          {actionLabel}
+        </Button>
+      ) : null}
+    </Box>
+  );
+}
+
+export function UploadDropzone({
+  primaryText,
+  onClick,
+}: {
+  primaryText: string;
+  onClick: () => void;
+}) {
+  return (
+    <Box
+      onClick={onClick}
+      sx={{
+        border: "1.5px dashed",
+        borderColor: "divider",
+        borderRadius: 2,
+        p: 3,
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+        gap: 1,
+        cursor: "pointer",
+        "&:hover": { bgcolor: "action.hover" },
+      }}
+    >
+      <CloudUploadIcon color="action" />
+      <Typography variant="body2" color="text.secondary">
+        {primaryText}
+      </Typography>
+      <Typography variant="caption" color="text.disabled">
+        PNG, JPG, WEBP, MP4, WEBM
+      </Typography>
+    </Box>
+  );
+}
+
+export function MediaPreviewCard({
+  item,
+  alt,
+  onRemove,
+  aspectRatio,
+  maxHeight,
+}: {
+  item: MediaItem;
+  alt: string;
+  onRemove: () => void;
+  aspectRatio: string;
+  maxHeight?: number;
+}) {
+  return (
+    <Box sx={{ position: "relative", width: "100%", maxWidth: 520 }}>
+      <Box
+        sx={{
+          width: "100%",
+          maxHeight,
+          aspectRatio,
+          overflow: "hidden",
+          borderRadius: 2,
+          border: "1px solid",
+          borderColor: "divider",
+          display: "block",
+          "& img, & video": {
+            width: "100%",
+            height: "100%",
+            objectFit: "cover",
+            display: "block",
+          },
+        }}
+      >
+        {renderMediaPreview(item, alt)}
+      </Box>
+      <IconButton
+        size="small"
+        onClick={onRemove}
+        sx={{
+          position: "absolute",
+          top: 6,
+          right: 6,
+          bgcolor: "rgba(0,0,0,0.55)",
+          color: "white",
+          "&:hover": { bgcolor: "rgba(0,0,0,0.75)" },
+        }}
+      >
+        <CloseIcon fontSize="small" />
+      </IconButton>
+    </Box>
+  );
+}
