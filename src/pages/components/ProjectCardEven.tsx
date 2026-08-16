@@ -175,6 +175,8 @@ const ProjectCardEven: React.FC<ProjectCardProps> = ({
                 xs: "0.9rem",
                 sm: "1rem",
               },
+              fontWeight: 700,
+              whiteSpace: "pre-wrap",
             }}
           >
             {description}
@@ -194,7 +196,7 @@ const ProjectCardEven: React.FC<ProjectCardProps> = ({
             />
           }
           sx={{
-            mt: 0.5,
+            mt: "auto",
             borderRadius: "999px",
             background:
               "linear-gradient(180deg, #a78bfa 0%, #7c5be6 60%, #6644cc 100%)",

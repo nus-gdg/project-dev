@@ -11,11 +11,13 @@ import {
 import { type Project, subscribeProjects } from "../../firebase/projects"
 import { logout } from "../../firebase/auth";
 import CreateProjectModal from "./components/CreateProjectModal";
+import DeleteConfirmDialog from "./components/DeleteConfirmDialog";
 
 export default function AdminPanel() {
   const [projects, setProjects] = useState<Project[]>([]);
   const [openDialog, setOpenDialog] = useState<boolean>(false);
   const [editingProject, setEditingProject] = useState<Project | null>(null);
+  const [deletingProject, setDeletingProject] = useState<Project | null>(null);
 
   const navigate = useNavigate()
 
@@ -33,6 +35,10 @@ export default function AdminPanel() {
   const handleOpenEdit = (project: Project) => {
     setEditingProject(project);
     setOpenDialog(true);
+  };
+
+  const handleOpenDelete = (project: Project) => {
+    setDeletingProject(project);
   };
 
   const handleLogout = async () => {
@@ -63,7 +69,12 @@ return (
     <Grid container spacing={3} mt={1}>
       {projects.map((proj, index) => (
         <Grid size={{ xs: 12, sm: 6, md: 4 }} key={proj.id}>
-          <ProjectCard project={proj} index={index} onEdit={handleOpenEdit} />
+          <ProjectCard
+            project={proj}
+            index={index}
+            onEdit={handleOpenEdit}
+            onDelete={handleOpenDelete}
+          />
         </Grid>
       ))}
     </Grid>
@@ -75,6 +86,15 @@ return (
         open={openDialog}
         onClose={() => setOpenDialog(false)}
         project={editingProject}
+      />
+    }
+
+    {/* Dialog for delete confirmation */}
+    {
+      deletingProject && <DeleteConfirmDialog
+        open={Boolean(deletingProject)}
+        project={deletingProject}
+        onClose={() => setDeletingProject(null)}
       />
     }
   </Box>

@@ -9,6 +9,7 @@ import {
   Button,
   Typography
 } from "@mui/material";
+import DeleteIcon from "@mui/icons-material/Delete";
 
 const cardPalettes = {
   even: {
@@ -27,7 +28,17 @@ const cardPalettes = {
   },
 };
 
-export default function ProjectCard({ project, index, onEdit }: { project: Project; index: number; onEdit: (project: Project) => void }) {
+export default function ProjectCard({
+  project,
+  index,
+  onEdit,
+  onDelete,
+}: {
+  project: Project;
+  index: number;
+  onEdit: (project: Project) => void;
+  onDelete: (project: Project) => void;
+}) {
   const coverMedia = project.coverImage;
   const navigate = useNavigate();
 
@@ -131,6 +142,7 @@ export default function ProjectCard({ project, index, onEdit }: { project: Proje
         zIndex: 1,
         mb: 2,
         flex: 1,
+        whiteSpace: "pre-wrap",
       }}
     >
       {project.description}
@@ -169,11 +181,19 @@ export default function ProjectCard({ project, index, onEdit }: { project: Proje
         mt: "auto",
       }}
     >
-      <Button variant="outlined" onClick={() => navigate(`/project/${project.id}`)}>
+      <Button variant="contained" onClick={() => navigate(`/project/${project.id}`)}>
         Preview
       </Button>
       <Button variant="contained" onClick={() => onEdit(project)}>
         Edit
+      </Button>
+      <Button
+        variant="contained"
+        color="error"
+        startIcon={<DeleteIcon />}
+        onClick={() => onDelete(project)}
+      >
+        Delete
       </Button>
     </Box>
   </Box>

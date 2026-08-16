@@ -15,6 +15,8 @@ import {
 import { storage } from "../../../firebase/config";
 import {
   createProject,
+  DEFAULT_APPLY_INFO,
+  deleteStorageFiles,
   type Media,
   type Project,
   updateProject,
@@ -120,10 +122,19 @@ export default function CreateProjectModal({ open, onClose, project }: Props) {
 
   const [title, setTitle] = useState(project?.title ?? "");
   const [description, setDescription] = useState(project?.description ?? "");
+  const [applyInfo, setApplyInfo] = useState(project?.applyInfo || DEFAULT_APPLY_INFO);
   const [roles, setRoles] = useState<string[]>(project?.roles ?? []);
   const [coverImage, setCoverImage] = useState<MediaItem | null>(() => getInitialCoverImage(project));
   const [otherMedia, setOtherMedia] = useState<MediaItem[]>(() => getInitialOtherMedia(project));
+  const [removedMediaPaths, setRemovedMediaPaths] = useState<string[]>([]);
   const [isSaving, setIsSaving] = useState(false);
+
+  function queueMediaRemoval(item: MediaItem | null): void {
+    const path = item?.media?.path;
+    if (path) {
+      setRemovedMediaPaths((paths) => [...paths, path]);
+    }
+  }
 
   function handleCoverPick(event: ChangeEvent<HTMLInputElement>): void {
     const file = event.target.files?.[0];
@@ -135,10 +146,9 @@ export default function CreateProjectModal({ open, onClose, project }: Props) {
       return;
     }
 
-    setCoverImage((currentCover) => {
-      revokeLocalMediaUrl(currentCover);
-      return createLocalMediaItem(file);
-    });
+    revokeLocalMediaUrl(coverImage);
+    queueMediaRemoval(coverImage);
+    setCoverImage(createLocalMediaItem(file));
 
     event.target.value = "";
   }
@@ -156,19 +166,17 @@ export default function CreateProjectModal({ open, onClose, project }: Props) {
   }
 
   function handleRemoveCover(): void {
-    setCoverImage((currentCover) => {
-      revokeLocalMediaUrl(currentCover);
-      return null;
-    });
+    revokeLocalMediaUrl(coverImage);
+    queueMediaRemoval(coverImage);
+    setCoverImage(null);
   }
 
   function handleRemoveMedia(id: string): void {
-    setOtherMedia((currentMedia) => {
-      const mediaToRemove = currentMedia.find((item) => item.id === id);
-      revokeLocalMediaUrl(mediaToRemove ?? null);
+    const mediaToRemove = otherMedia.find((item) => item.id === id);
+    revokeLocalMediaUrl(mediaToRemove ?? null);
+    queueMediaRemoval(mediaToRemove ?? null);
 
-      return currentMedia.filter((item) => item.id !== id);
-    });
+    setOtherMedia((currentMedia) => currentMedia.filter((item) => item.id !== id));
   }
 
   function handleReorderMedia(draggedId: string, targetId: string): void {
@@ -211,12 +219,17 @@ export default function CreateProjectModal({ open, onClose, project }: Props) {
         roles,
         coverImage: savedCoverImage,
         otherMedia: savedOtherMedia,
+        applyInfo: applyInfo || DEFAULT_APPLY_INFO,
       };
 
       if (isEditing) {
         await updateProject(project.id ?? "", projectPayload);
       } else {
         await createProject(projectPayload);
+      }
+
+      if (removedMediaPaths.length > 0) {
+        await deleteStorageFiles(removedMediaPaths);
       }
 
       handleClose();
@@ -274,6 +287,16 @@ export default function CreateProjectModal({ open, onClose, project }: Props) {
             label="Description"
             value={description}
             onChange={(event) => setDescription(event.target.value)}
+            multiline
+            minRows={3}
+            maxRows={15}
+            fullWidth
+          />
+
+          <TextField
+            label="Info on Applying"
+            value={applyInfo}
+            onChange={(event) => setApplyInfo(event.target.value)}
             multiline
             minRows={3}
             maxRows={15}

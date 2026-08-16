@@ -1,13 +1,14 @@
+import { lazy, Suspense } from "react";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import Home from "../pages/Home";
 import Project from "../pages/Project";
-import AdminLogin from "../pages/AdminLogin";
-import AdminPanel from "../pages/AdminPanel/AdminPanel";
 import NotFound from "../pages/NotFound";
 import ProtectedRoute from "./ProtectedRoute";
 
 import "../App.css"
 
+const AdminLogin = lazy(() => import("../pages/AdminLogin"));
+const AdminPanel = lazy(() => import("../pages/AdminPanel/AdminPanel"));
 
 export default function AppRoutes() {
   return (
@@ -17,13 +18,22 @@ export default function AppRoutes() {
         <Route path="/" element={<Home />} />
         <Route path="/project/:projectId" element={<Project/>}/>
 
-        <Route path="/admin-login" element={<AdminLogin />} />
+        <Route
+          path="/admin-login"
+          element={
+            <Suspense fallback={null}>
+              <AdminLogin />
+            </Suspense>
+          }
+        />
 
         <Route
           path="/admin"
           element={
             <ProtectedRoute>
-              <AdminPanel />
+              <Suspense fallback={null}>
+                <AdminPanel />
+              </Suspense>
             </ProtectedRoute>
           }
         />
@@ -32,6 +42,6 @@ export default function AppRoutes() {
       </Routes>
     </Router>
     </div>
-    
+
   );
 }
