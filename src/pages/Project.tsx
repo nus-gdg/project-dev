@@ -1,5 +1,6 @@
 import { useEffect, useState, type ReactElement } from "react";
 import { useNavigate, useParams } from "react-router-dom";
+import BannerTop from "./components/BannerTop";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import ArrowBackIosNewIcon from "@mui/icons-material/ArrowBackIosNew";
 import ArrowForwardIosIcon from "@mui/icons-material/ArrowForwardIos";
@@ -64,22 +65,7 @@ function getRoleTone(role: string, index: number) {
 
 function Header({ onBack }: { onBack: () => void }) {
   return (
-    <header className="project-detail-header">
-      <span className="header-shape header-shape-one" />
-      <span className="header-shape header-shape-two" />
-      <span className="header-shape header-shape-three" />
-      <span className="header-shape header-shape-four" />
-      <span className="header-spark header-spark-one">+</span>
-      <span className="header-spark header-spark-two">+</span>
-
-      <div className="project-shell">
-        <h1 className="project-brand">PROJECT: DEV</h1>
-        <button className="project-back-button" type="button" onClick={onBack}>
-          <ArrowBackIcon fontSize="inherit" />
-          Back to projects
-        </button>
-      </div>
-    </header>
+    <BannerTop isProjectView={true} />
   );
 }
 

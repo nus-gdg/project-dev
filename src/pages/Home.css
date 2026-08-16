@@ -1,0 +1,32 @@
+.home-page {
+    position: relative;
+    min-height: 100vh;
+    overflow: hidden;
+    background:
+        linear-gradient(90deg, rgba(40, 60, 119, 0.1) 1px, transparent 1px),
+        linear-gradient(0deg, rgba(40, 60, 119, 0.08) 1px, transparent 1px),
+        #dbedff;
+    background-size: 42px 42px;
+    color: #f8fbff;
+}
+
+.home-page::before {
+    content: "";
+    position: absolute;
+    inset: 58px 0 0;
+    pointer-events: none;
+    background:
+        linear-gradient(
+            135deg,
+            transparent 0 24%,
+            rgba(40, 60, 119, 0.22) 24% 26%,
+            transparent 26% 100%
+        ) 18px 26px / 180px 120px,
+        linear-gradient(
+            45deg,
+            transparent 0 44%,
+            rgba(255, 126, 101, 0.18) 44% 47%,
+            transparent 47% 100%
+        ) 0 0 / 150px 110px;
+    opacity: 0.7;
+}
