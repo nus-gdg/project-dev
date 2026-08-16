@@ -35,17 +35,16 @@ jobs:
       - name: Build application
         run: npm run build
 
+      - name: Create SPA fallback page
+        run: cp dist/index.html dist/404.html
+
       - name: Configure GitHub Pages
         if: github.event_name == 'push'
         uses: actions/configure-pages@v5
 
-      - name: Build GitHub Pages artifact
-        if: github.event_name == 'push'
-        run: npm run build -- --base=/${{ github.event.repository.name }}/
-
       - name: Upload GitHub Pages artifact
         if: github.event_name == 'push'
-        uses: actions/upload-pages-artifact@v3
+        uses: actions/upload-pages-artifact@v4
         with:
           path: dist
 
