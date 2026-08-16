@@ -1,4 +1,4 @@
-import { useEffect, useState, type ReactElement } from "react";
+import { useEffect, useRef, useState, type ReactElement } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import BannerTop from "./components/BannerTop";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
@@ -12,11 +12,17 @@ import PlayArrowIcon from "@mui/icons-material/PlayArrow";
 import SportsEsportsIcon from "@mui/icons-material/SportsEsports";
 import {
   getProject,
+  isVideoMedia,
+  type Media,
   type Project as ProjectRecord,
 } from "../firebase/projects";
 import "./Project.css";
 
 const roleToneClasses = ["is-purple", "is-coral", "is-gold", "is-cyan"];
+
+function isMedia(media: Media | null): media is Media {
+  return media !== null;
+}
 
 function getRoleIcon(role: string): ReactElement {
   const normalizedRole = role.toLowerCase();
@@ -86,6 +92,31 @@ function getRoleTone(role: string, index: number): string {
   return roleToneClasses[index % roleToneClasses.length];
 }
 
+function MediaPreview({
+  media,
+  alt,
+  controls = false,
+}: {
+  media: Media;
+  alt: string;
+  controls?: boolean;
+}) {
+  if (isVideoMedia(media)) {
+    return (
+      <video
+        src={media.url}
+        controls={controls}
+        muted={!controls}
+        playsInline
+        preload="metadata"
+        aria-label={alt}
+      />
+    );
+  }
+
+  return <img src={media.url} alt={alt} />;
+}
+
 function Header() {
   return <BannerTop isProjectView />;
 }
@@ -97,6 +128,8 @@ function ProjectLayout({
   project: ProjectRecord | null;
   loading: boolean;
 }) {
+  const [activeMediaIndex, setActiveMediaIndex] = useState(0);
+  const activeThumbRef = useRef<HTMLButtonElement | null>(null);
   const title = project?.title ?? "Project title";
 
   const description =
@@ -104,7 +137,42 @@ function ProjectLayout({
     "Loading the project description, recruiting roles, and application details.";
 
   const roles = project?.roles ?? [];
-  const imageUrl = project?.imageUrl;
+  const coverImage = project?.coverImage ?? null;
+  const media = [coverImage, ...(project?.otherMedia ?? [])].filter(isMedia);
+  const activeMedia = media[activeMediaIndex] ?? media[0] ?? null;
+  const canAdvanceMedia = media.length > 1;
+
+  useEffect(() => {
+    setActiveMediaIndex(0);
+  }, [project?.id]);
+
+  useEffect(() => {
+    if (activeMediaIndex >= media.length) {
+      setActiveMediaIndex(0);
+    }
+  }, [activeMediaIndex, media.length]);
+
+  useEffect(() => {
+    activeThumbRef.current?.scrollIntoView({
+      behavior: "smooth",
+      block: "nearest",
+      inline: "nearest",
+    });
+  }, [activeMediaIndex, media.length]);
+
+  const handlePreviousMedia = () => {
+    if (!canAdvanceMedia) return;
+
+    setActiveMediaIndex((currentIndex) =>
+      currentIndex === 0 ? media.length - 1 : currentIndex - 1,
+    );
+  };
+
+  const handleNextMedia = () => {
+    if (!canAdvanceMedia) return;
+
+    setActiveMediaIndex((currentIndex) => (currentIndex + 1) % media.length);
+  };
 
   return (
     <main
@@ -118,10 +186,11 @@ function ProjectLayout({
       >
         <div className="project-media-card">
           <div className="project-preview-frame">
-            {imageUrl ? (
-              <img
-                src={imageUrl}
-                alt={`${title} preview`}
+            {activeMedia ? (
+              <MediaPreview
+                media={activeMedia}
+                alt={`${title} preview ${activeMediaIndex + 1}`}
+                controls
               />
             ) : (
               <div
@@ -155,41 +224,48 @@ function ProjectLayout({
             type="button"
             aria-label="Previous preview"
             title="Previous preview"
+            onClick={handlePreviousMedia}
+            disabled={!canAdvanceMedia}
           >
             <ArrowBackIosNewIcon fontSize="small" />
           </button>
-
-          <button
-            className="project-thumb-button"
-            type="button"
-            aria-label="Preview 1"
-          >
-            {imageUrl ? (
-              <img src={imageUrl} alt="" />
-            ) : null}
-          </button>
-
-          <button
-            className="project-thumb-button is-active"
-            type="button"
-            aria-label="Preview video"
-          >
-            <span className="project-thumb-play">
-              <PlayArrowIcon fontSize="small" />
-            </span>
-          </button>
-
-          <button
-            className="project-thumb-button"
-            type="button"
-            aria-label="Preview 3"
-          />
-
+          <div className="project-thumb-track">
+            {media.length > 0 ? (
+              media.map((item, mediaIndex) => (
+                <button
+                  className={`project-thumb-button${
+                    mediaIndex === activeMediaIndex ? " is-active" : ""
+                  }`}
+                  type="button"
+                  aria-label={`Preview ${mediaIndex + 1}`}
+                  aria-current={mediaIndex === activeMediaIndex}
+                  key={`${item.path}-${mediaIndex}`}
+                  ref={mediaIndex === activeMediaIndex ? activeThumbRef : null}
+                  onClick={() => setActiveMediaIndex(mediaIndex)}
+                >
+                  <MediaPreview media={item} alt="" />
+                  {isVideoMedia(item) ? (
+                    <span className="project-thumb-play" aria-hidden="true">
+                      <PlayArrowIcon fontSize="small" />
+                    </span>
+                  ) : null}
+                </button>
+              ))
+            ) : (
+              <button className="project-thumb-button is-active" type="button" aria-label="Preview 1">
+                <span className="project-thumb-play">
+                  <PlayArrowIcon fontSize="small" />
+                </span>
+              </button>
+            )}
+          </div>
           <button
             className="project-carousel-arrow"
             type="button"
             aria-label="Next preview"
             title="Next preview"
+            onClick={handleNextMedia}
+            disabled={!canAdvanceMedia}
           >
             <ArrowForwardIosIcon fontSize="small" />
           </button>
