@@ -195,7 +195,7 @@ const ProjectCardOdd: React.FC<ProjectCardProps> = ({
             />
           }
           sx={{
-            mt: 0.5,
+            mt: "auto",
             borderRadius: "999px",
             background:
               "linear-gradient(180deg, #B478FD 0%,rgb(163, 91, 230) 60%,rgb(152, 97, 184) 100%)",

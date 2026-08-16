@@ -1,5 +1,6 @@
-import { collection, addDoc, getDocs, getDoc, updateDoc, doc, Timestamp, onSnapshot } from "firebase/firestore";
-import { db } from "./config";
+import { collection, addDoc, getDocs, getDoc, updateDoc, deleteDoc, doc, Timestamp, onSnapshot } from "firebase/firestore";
+import { deleteObject, ref } from "firebase/storage";
+import { db, storage } from "./config";
 
 export type MediaKind = "image" | "video";
 
@@ -72,4 +73,28 @@ export async function updateProject(id: string, project: Project) {
     applyInfo: project.applyInfo,
   };
   await updateDoc(docRef, updateData);
+}
+
+async function deleteStorageFile(path: string): Promise<void> {
+  try {
+    await deleteObject(ref(storage, path));
+  } catch (err) {
+    console.error(`Failed to delete storage file at ${path}:`, err);
+  }
+}
+
+export async function deleteStorageFiles(paths: string[]): Promise<void> {
+  await Promise.all(paths.map(deleteStorageFile));
+}
+
+export async function deleteProject(project: Project) {
+  if (!project.id) return;
+
+  await deleteDoc(doc(db, COLLECTION_NAME, project.id));
+
+  const mediaPaths = [project.coverImage, ...project.otherMedia]
+    .filter((media): media is Media => media !== null)
+    .map((media) => media.path);
+
+  await deleteStorageFiles(mediaPaths);
 }
