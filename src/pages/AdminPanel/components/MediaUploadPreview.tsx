@@ -1,10 +1,12 @@
-import type { DragEvent, ReactElement } from "react";
+import type { ReactElement } from "react";
 import {
   Box,
   Button,
   IconButton,
   Typography,
 } from "@mui/material";
+import { useSortable } from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
 import CloudUploadIcon from "@mui/icons-material/CloudUpload";
 import CloseIcon from "@mui/icons-material/Close";
 import DragIndicatorIcon from "@mui/icons-material/DragIndicator";
@@ -175,34 +177,22 @@ export function MediaListItem({
   item,
   alt,
   onRemove,
-  draggable,
-  isDragging,
-  onHandlePointerDown,
-  onHandlePointerUp,
-  onDragStart,
-  onDragOver,
-  onDrop,
-  onDragEnd,
 }: {
   item: MediaItem;
   alt: string;
   onRemove: () => void;
-  draggable: boolean;
-  isDragging: boolean;
-  onHandlePointerDown: () => void;
-  onHandlePointerUp: () => void;
-  onDragStart: (event: DragEvent<HTMLDivElement>) => void;
-  onDragOver: (event: DragEvent<HTMLDivElement>) => void;
-  onDrop: (event: DragEvent<HTMLDivElement>) => void;
-  onDragEnd: () => void;
 }) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
+    id: item.id,
+  });
+
   return (
     <Box
-      draggable={draggable}
-      onDragStart={onDragStart}
-      onDragOver={onDragOver}
-      onDrop={onDrop}
-      onDragEnd={onDragEnd}
+      ref={setNodeRef}
+      style={{
+        transform: CSS.Transform.toString(transform),
+        transition: transition ?? undefined,
+      }}
       sx={{
         display: "flex",
         alignItems: "center",
@@ -216,8 +206,8 @@ export function MediaListItem({
       }}
     >
       <Box
-        onMouseDown={onHandlePointerDown}
-        onMouseUp={onHandlePointerUp}
+        {...attributes}
+        {...listeners}
         sx={{
           display: "flex",
           alignItems: "center",

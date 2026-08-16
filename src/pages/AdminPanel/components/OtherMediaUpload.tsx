@@ -1,5 +1,14 @@
-import { useRef, useState, type ChangeEvent, type DragEvent } from "react";
+import { useRef, type ChangeEvent } from "react";
 import { Box } from "@mui/material";
+import {
+  closestCenter,
+  DndContext,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  type DragEndEvent,
+} from "@dnd-kit/core";
+import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import {
   ACCEPTED_MEDIA_TYPES,
   MediaListItem,
@@ -22,20 +31,17 @@ export default function OtherMediaUpload({
   onReorder,
 }: OtherMediaUploadProps) {
   const inputRef = useRef<HTMLInputElement>(null);
-  const [draggableId, setDraggableId] = useState<string | null>(null);
-  const [draggedId, setDraggedId] = useState<string | null>(null);
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: { distance: 8 },
+    }),
+  );
 
-  function handleDrop(event: DragEvent<HTMLDivElement>, targetId: string): void {
-    event.preventDefault();
-
-    if (draggedId && draggedId !== targetId) {
-      onReorder(draggedId, targetId);
+  function handleDragEnd(event: DragEndEvent): void {
+    const { active, over } = event;
+    if (over && active.id !== over.id) {
+      onReorder(String(active.id), String(over.id));
     }
-  }
-
-  function handleDragEnd(): void {
-    setDraggableId(null);
-    setDraggedId(null);
   }
 
   return (
@@ -57,27 +63,25 @@ export default function OtherMediaUpload({
       />
 
       {otherMedia.length > 0 ? (
-        <Box sx={{ display: "flex", flexDirection: "column", gap: 1, width: "100%", maxWidth: 520 }}>
-          {otherMedia.map((item, index) => (
-            <MediaListItem
-              key={item.id}
-              item={item}
-              alt={`Project media preview ${index + 1}`}
-              onRemove={() => onRemove(item.id)}
-              draggable={draggableId === item.id}
-              isDragging={draggedId === item.id}
-              onHandlePointerDown={() => setDraggableId(item.id)}
-              onHandlePointerUp={() => setDraggableId(null)}
-              onDragStart={(event) => {
-                event.dataTransfer.effectAllowed = "move";
-                setDraggedId(item.id);
-              }}
-              onDragOver={(event) => event.preventDefault()}
-              onDrop={(event) => handleDrop(event, item.id)}
-              onDragEnd={handleDragEnd}
-            />
-          ))}
-        </Box>
+        <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+          <SortableContext
+            items={otherMedia.map((item) => item.id)}
+            strategy={verticalListSortingStrategy}
+          >
+            <Box
+              sx={{ display: "flex", flexDirection: "column", gap: 1, width: "100%", maxWidth: 520 }}
+            >
+              {otherMedia.map((item, index) => (
+                <MediaListItem
+                  key={item.id}
+                  item={item}
+                  alt={`Project media preview ${index + 1}`}
+                  onRemove={() => onRemove(item.id)}
+                />
+              ))}
+            </Box>
+          </SortableContext>
+        </DndContext>
       ) : (
         <UploadDropzone
           primaryText="Click to upload additional images or videos"

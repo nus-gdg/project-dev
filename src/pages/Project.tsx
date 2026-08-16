@@ -96,17 +96,20 @@ function MediaPreview({
   media,
   alt,
   controls = false,
+  autoPlay = false,
 }: {
   media: Media;
   alt: string;
   controls?: boolean;
+  autoPlay?: boolean;
 }) {
   if (isVideoMedia(media)) {
     return (
       <video
         src={media.url}
         controls={controls}
-        muted={!controls}
+        autoPlay={autoPlay}
+        muted={!controls || autoPlay}
         playsInline
         preload="metadata"
         aria-label={alt}
@@ -191,6 +194,7 @@ function ProjectLayout({
                 media={activeMedia}
                 alt={`${title} preview ${activeMediaIndex + 1}`}
                 controls
+                autoPlay
               />
             ) : (
               <div
