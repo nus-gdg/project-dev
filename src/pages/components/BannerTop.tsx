@@ -149,7 +149,7 @@ const BannerTop: React.FC<BannerTopProps> = ({ isProjectView = false }) => {
               }
         }
       >
-        {isProjectView ? "Back" : "Sign up"}
+        {isProjectView ? "Back" : "Register"}
       </Button>
     </Box>
   );
