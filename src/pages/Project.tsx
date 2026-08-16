@@ -208,7 +208,9 @@ function ProjectLayout({
 
             <a
               className="project-signup"
-              href="#project-apply"
+              href="https://nusync.nus.edu.sg/GDG/survey?survey_uid=136ac03a-ed5e-11f0-8092-06adae5a1497"
+              target="_blank"
+              rel="noopener noreferrer"
             >
               <span className="project-signup-icon">
                 <PlayArrowIcon fontSize="inherit" />
