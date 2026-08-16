@@ -55,11 +55,21 @@ const BannerTop: React.FC<BannerTopProps> = ({ isProjectView = false }) => {
         component="img"
         src="/logo.svg"
         alt="Project Dev"
+        onClick={() => navigate("/")}
+        role="button"
+        tabIndex={0}
+        onKeyDown={(event) => {
+          if (event.key === "Enter" || event.key === " ") {
+            event.preventDefault();
+            navigate("/");
+          }
+        }}
         sx={{
           height: "2.9rem",
           objectFit: "contain",
           position: "relative",
           zIndex: 1,
+          cursor: "pointer",
         }}
       />
 

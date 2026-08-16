@@ -61,9 +61,9 @@ return (
     </Button>
 
     <Grid container spacing={3} mt={1}>
-      {projects.map((proj) => (
+      {projects.map((proj, index) => (
         <Grid size={{ xs: 12, sm: 6, md: 4 }} key={proj.id}>
-          <ProjectCard project={proj} onEdit={handleOpenEdit} />
+          <ProjectCard project={proj} index={index} onEdit={handleOpenEdit} />
         </Grid>
       ))}
     </Grid>

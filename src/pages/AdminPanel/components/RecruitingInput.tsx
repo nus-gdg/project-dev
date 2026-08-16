@@ -34,7 +34,6 @@ export default function RecruitingInput({ roles, setRoles }: {
 
     return (
         <Stack spacing={1}>
-            {/* Input + Add Button */}
             <Box sx={{ display: "flex", gap: 1, alignItems: "center" }}>
                 <TextField
                     label="Role"
@@ -53,7 +52,6 @@ export default function RecruitingInput({ roles, setRoles }: {
                 </Button>
             </Box>
 
-            {/* Display chips */}
             <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1 }}>
                 {roles.map((r) => (
                     <Chip
