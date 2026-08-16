@@ -63,7 +63,7 @@ function getRoleTone(role: string, index: number) {
   return roleToneClasses[index % roleToneClasses.length];
 }
 
-function Header({ onBack }: { onBack: () => void }) {
+function Header() {
   return (
     <BannerTop isProjectView={true} />
   );
