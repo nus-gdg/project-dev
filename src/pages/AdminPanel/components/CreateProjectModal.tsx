@@ -129,6 +129,12 @@ export default function CreateProjectModal({ open, onClose, project }: Props) {
     const file = event.target.files?.[0];
     if (!file) return;
 
+    if (!file.type.startsWith("image/")) {
+      window.alert("The cover must be an image. Videos can be added under Other Media.");
+      event.target.value = "";
+      return;
+    }
+
     setCoverImage((currentCover) => {
       revokeLocalMediaUrl(currentCover);
       return createLocalMediaItem(file);
@@ -162,6 +168,20 @@ export default function CreateProjectModal({ open, onClose, project }: Props) {
       revokeLocalMediaUrl(mediaToRemove ?? null);
 
       return currentMedia.filter((item) => item.id !== id);
+    });
+  }
+
+  function handleReorderMedia(draggedId: string, targetId: string): void {
+    setOtherMedia((currentMedia) => {
+      const fromIndex = currentMedia.findIndex((item) => item.id === draggedId);
+      const toIndex = currentMedia.findIndex((item) => item.id === targetId);
+      if (fromIndex === -1 || toIndex === -1) return currentMedia;
+
+      const reordered = [...currentMedia];
+      const [movedItem] = reordered.splice(fromIndex, 1);
+      reordered.splice(toIndex, 0, movedItem);
+
+      return reordered;
     });
   }
 
@@ -272,6 +292,7 @@ export default function CreateProjectModal({ open, onClose, project }: Props) {
             otherMedia={otherMedia}
             onPick={handleMediaPick}
             onRemove={handleRemoveMedia}
+            onReorder={handleReorderMedia}
           />
         </Stack>
       </DialogContent>

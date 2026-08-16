@@ -38,76 +38,6 @@
   box-shadow: 0 3px 0 rgba(32, 5, 61, 0.42);
 }
 
-.project-detail-header .project-shell {
-  display: flex;
-  min-height: 76px;
-  align-items: center;
-  justify-content: space-between;
-  gap: 20px;
-}
-
-.header-shape {
-  position: absolute;
-  display: block;
-  pointer-events: none;
-  background: #24105b;
-  opacity: 0.86;
-}
-
-.header-shape-one {
-  top: -20px;
-  left: -10px;
-  width: 150px;
-  height: 54px;
-  border-radius: 0 0 28px 0;
-  transform: skewX(18deg);
-}
-
-.header-shape-two {
-  top: 10px;
-  left: 330px;
-  width: 96px;
-  height: 40px;
-  border-radius: 24px 18px 12px 24px;
-  transform: rotate(10deg);
-}
-
-.header-shape-three {
-  top: -12px;
-  right: 230px;
-  width: 120px;
-  height: 52px;
-  border-radius: 0 0 32px 32px;
-  transform: rotate(-12deg);
-}
-
-.header-shape-four {
-  right: -26px;
-  bottom: -14px;
-  width: 260px;
-  height: 64px;
-  border-radius: 42px 0 0 0;
-}
-
-.header-spark {
-  position: absolute;
-  color: rgba(103, 245, 216, 0.28);
-  font-family: "Courier New", monospace;
-  font-size: 1.9rem;
-  font-weight: 900;
-  line-height: 1;
-  pointer-events: none;
-}
-
-.header-spark-one {
-  top: 24px;
-  left: 24px;
-}
-
-.header-spark-two {
-  top: 18px;
-  right: 118px;
-}
 
 .project-brand {
   position: relative;
@@ -126,31 +56,8 @@
     4px 4px 0 rgba(32, 5, 61, 0.72);
 }
 
-.project-back-button {
-  position: relative;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 7px;
-  min-height: 42px;
-  padding: 8px 18px;
-  border: 0;
-  border-radius: 999px;
-  background: #ff7e65;
-  color: #4f1c35;
-  box-shadow: 0 5px 0 rgba(32, 5, 61, 0.55);
-  cursor: pointer;
-  font-family: "Overpass", sans-serif;
-  font-size: 1.08rem;
-  font-weight: 900;
-  text-transform: uppercase;
-}
 
-.project-back-button:hover {
-  background: #ff927b;
-}
 
-.project-back-button:focus-visible,
 .project-signup:focus-visible,
 .project-thumb-button:focus-visible,
 .project-carousel-arrow:focus-visible {
@@ -171,41 +78,34 @@
   margin: 14px auto 28px;
   padding: 22px 24px 28px;
   overflow: hidden;
-  border: 3px solid rgba(104, 151, 196, 0.78);
-  border-radius: 12px;
+
+  border: 2px solid rgba(100, 140, 255, 0.35);
+  border-radius: 24px;
+
   background:
-    linear-gradient(120deg, rgba(34, 8, 70, 0.96) 0%, rgba(38, 25, 101, 0.98) 47%, rgba(43, 63, 126, 0.97) 100%);
+    url('/sprite2.svg'),
+    url('/console2.svg'),
+    linear-gradient(45deg, #283C77 30%, #4364c5 100%);
+
+  background-position:
+    0% 100%,
+    105% -20%,
+    center;
+
+  background-repeat:
+    no-repeat,
+    no-repeat,
+    no-repeat;
+
+  background-size:
+    220px,
+    200px,
+    cover;
+
   box-shadow:
-    0 4px 0 rgba(32, 5, 61, 0.38),
-    0 10px 24px rgba(32, 5, 61, 0.28);
+    0 8px 32px rgba(10, 20, 80, 0.55),
+    inset 0 1px 0 rgba(255, 255, 255, 0.12);
 }
-
-.project-detail-panel::before {
-  content: "#";
-  position: absolute;
-  top: 3px;
-  right: 18px;
-  color: rgba(103, 245, 216, 0.22);
-  font-family: "Courier New", monospace;
-  font-size: 7.8rem;
-  font-weight: 900;
-  line-height: 1;
-  transform: rotate(16deg);
-}
-
-.project-detail-panel::after {
-  content: "++";
-  position: absolute;
-  top: 24px;
-  right: 88px;
-  color: rgba(32, 5, 61, 0.42);
-  font-family: "Courier New", monospace;
-  font-size: 4.5rem;
-  font-weight: 900;
-  line-height: 1;
-  transform: rotate(14deg);
-}
-
 .project-media-column,
 .project-copy-column {
   position: relative;
@@ -277,30 +177,64 @@
   line-height: 1.1;
   text-transform: uppercase;
 }
-
 .project-signup {
   display: inline-flex;
   flex: 0 0 auto;
   align-items: center;
   justify-content: center;
   gap: 7px;
-  min-height: 38px;
-  padding: 6px 13px 5px 9px;
-  border: 0;
+
+  min-height: 25px;
+  padding: 0.9rem 1.5rem;
+
+  border: 1px solid rgba(160, 130, 255, 0.4);
   border-radius: 999px;
-  background: #67f5d8;
+
+  background: linear-gradient(
+    180deg,
+    #56f4d4 60%,
+    rgb(97, 157, 184) 100%
+  );
+
   color: #283c77;
-  box-shadow: 0 4px 0 rgba(98, 59, 168, 0.68);
+
   font-family: "Overpass", sans-serif;
-  font-size: 1rem;
+  font-size: 1.5rem;
   font-weight: 900;
+  letter-spacing: 0.06em;
   text-decoration: none;
   text-transform: uppercase;
+
+  box-shadow:
+    0 4px 16px rgba(120, 80, 220, 0.5),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2);
+
+  transition: all 0.18s ease;
+  position: relative;
+  z-index: 1;
 }
 
 .project-signup:hover {
-  background: #7ff9df;
+  background: linear-gradient(
+    180deg,
+    #56f4d4 0%,
+    rgb(123, 154, 240) 100%
+  );
+
+  box-shadow:
+    0 6px 22px rgba(141, 211, 205, 0.65),
+    inset 0 1px 0 rgba(255, 255, 255, 0.25);
+
+  transform: translateY(-1px);
 }
+
+.project-signup:active {
+  transform: translateY(0px);
+
+  box-shadow:
+    0 2px 8px rgba(120, 80, 220, 0.4);
+}
+
 
 .project-signup-icon {
   display: inline-grid;
@@ -466,11 +400,11 @@
   align-items: center;
   justify-content: center;
   gap: 7px;
-  min-height: 31px;
+  min-height: 50px;
   padding: 5px 15px 4px 12px;
   border-radius: 999px;
   color: #27113d;
-  font-size: 0.84rem;
+  font-size: 1.25rem;
   font-weight: 900;
   line-height: 1;
   text-transform: uppercase;

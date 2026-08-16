@@ -1,6 +1,6 @@
 import { useRef, type ChangeEvent } from "react";
 import {
-  ACCEPTED_MEDIA_TYPES,
+  ACCEPTED_IMAGE_TYPES,
   MediaPreviewCard,
   SectionHeader,
   UploadDropzone,
@@ -25,7 +25,7 @@ export default function CoverImageUpload({
       <input
         ref={inputRef}
         type="file"
-        accept={ACCEPTED_MEDIA_TYPES}
+        accept={ACCEPTED_IMAGE_TYPES}
         style={{ display: "none" }}
         onChange={onPick}
       />
@@ -47,7 +47,8 @@ export default function CoverImageUpload({
         />
       ) : (
         <UploadDropzone
-          primaryText="Click to upload a cover image or video"
+          primaryText="Click to upload a cover image"
+          hintText="PNG, JPG, WEBP"
           onClick={() => inputRef.current?.click()}
         />
       )}

@@ -8,6 +8,8 @@ import ProjectCardOdd from "./components/ProjectCardOdd";
 import { getProjects } from "../firebase/projects";
 import type { Project } from "../firebase/projects";
 
+import "./Home.css";
+
 export default function Home() {
     const [projects, setProjects] = useState<Project[]>([]);
     const [loading, setLoading] = useState(true);
@@ -29,7 +31,7 @@ export default function Home() {
     }, []);
 
     return (
-        <Box>
+         <Box className="home-page">
             <BannerTop />
 
             {loading ? (
