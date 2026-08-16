@@ -175,6 +175,7 @@ const ProjectCardEven: React.FC<ProjectCardProps> = ({
                 xs: "0.9rem",
                 sm: "1rem",
               },
+              whiteSpace: "pre-wrap",
             }}
           >
             {description}

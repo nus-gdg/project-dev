@@ -11,6 +11,7 @@ import GroupsIcon from "@mui/icons-material/Groups";
 import PlayArrowIcon from "@mui/icons-material/PlayArrow";
 import SportsEsportsIcon from "@mui/icons-material/SportsEsports";
 import {
+  DEFAULT_APPLY_INFO,
   getProject,
   isVideoMedia,
   type Media,
@@ -96,20 +97,17 @@ function MediaPreview({
   media,
   alt,
   controls = false,
-  autoPlay = false,
 }: {
   media: Media;
   alt: string;
   controls?: boolean;
-  autoPlay?: boolean;
 }) {
   if (isVideoMedia(media)) {
     return (
       <video
         src={media.url}
         controls={controls}
-        autoPlay={autoPlay}
-        muted={!controls || autoPlay}
+        muted={!controls}
         playsInline
         preload="metadata"
         aria-label={alt}
@@ -138,6 +136,8 @@ function ProjectLayout({
   const description =
     project?.description ??
     "Loading the project description, recruiting roles, and application details.";
+
+  const applyInfo = project?.applyInfo || DEFAULT_APPLY_INFO;
 
   const roles = project?.roles ?? [];
   const coverImage = project?.coverImage ?? null;
@@ -194,7 +194,6 @@ function ProjectLayout({
                 media={activeMedia}
                 alt={`${title} preview ${activeMediaIndex + 1}`}
                 controls
-                autoPlay
               />
             ) : (
               <div
@@ -329,10 +328,7 @@ function ProjectLayout({
           </h2>
 
           <p className="project-body">
-            Tell the project team which role you are interested
-            in, what you would like to contribute, and any
-            portfolio or class project links that help show your
-            work.
+            {applyInfo}
           </p>
         </div>
       </section>

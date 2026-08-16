@@ -131,6 +131,7 @@ export default function ProjectCard({ project, index, onEdit }: { project: Proje
         zIndex: 1,
         mb: 2,
         flex: 1,
+        whiteSpace: "pre-wrap",
       }}
     >
       {project.description}

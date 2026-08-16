@@ -15,6 +15,7 @@ import {
 import { storage } from "../../../firebase/config";
 import {
   createProject,
+  DEFAULT_APPLY_INFO,
   type Media,
   type Project,
   updateProject,
@@ -120,6 +121,7 @@ export default function CreateProjectModal({ open, onClose, project }: Props) {
 
   const [title, setTitle] = useState(project?.title ?? "");
   const [description, setDescription] = useState(project?.description ?? "");
+  const [applyInfo, setApplyInfo] = useState(project?.applyInfo || DEFAULT_APPLY_INFO);
   const [roles, setRoles] = useState<string[]>(project?.roles ?? []);
   const [coverImage, setCoverImage] = useState<MediaItem | null>(() => getInitialCoverImage(project));
   const [otherMedia, setOtherMedia] = useState<MediaItem[]>(() => getInitialOtherMedia(project));
@@ -211,6 +213,7 @@ export default function CreateProjectModal({ open, onClose, project }: Props) {
         roles,
         coverImage: savedCoverImage,
         otherMedia: savedOtherMedia,
+        applyInfo: applyInfo || DEFAULT_APPLY_INFO,
       };
 
       if (isEditing) {
@@ -274,6 +277,16 @@ export default function CreateProjectModal({ open, onClose, project }: Props) {
             label="Description"
             value={description}
             onChange={(event) => setDescription(event.target.value)}
+            multiline
+            minRows={3}
+            maxRows={15}
+            fullWidth
+          />
+
+          <TextField
+            label="Info on Applying"
+            value={applyInfo}
+            onChange={(event) => setApplyInfo(event.target.value)}
             multiline
             minRows={3}
             maxRows={15}

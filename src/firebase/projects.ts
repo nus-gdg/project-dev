@@ -14,6 +14,9 @@ export function isVideoMedia(media: Media | null | undefined): boolean {
   return media?.kind === "video";
 }
 
+export const DEFAULT_APPLY_INFO =
+  "Tell the project team which role you are interested in, what you would like to contribute, and any portfolio or class project links that help show your work.";
+
 export interface Project {
   id?: string;
   title: string;
@@ -21,6 +24,7 @@ export interface Project {
   roles: string[];
   coverImage: Media | null;
   otherMedia: Media[];
+  applyInfo: string;
 }
 
 const COLLECTION_NAME = "projects";
@@ -65,6 +69,7 @@ export async function updateProject(id: string, project: Project) {
     roles: project.roles,
     coverImage: project.coverImage,
     otherMedia: project.otherMedia,
+    applyInfo: project.applyInfo,
   };
   await updateDoc(docRef, updateData);
 }
