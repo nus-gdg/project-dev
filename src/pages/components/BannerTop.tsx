@@ -16,8 +16,8 @@ const BannerTop: React.FC<BannerTopProps> = ({ isProjectView = false }) => {
     if (isProjectView) {
       navigate(-1);
     } else {
-      navigate("../signup");
-    }
+    window.open("https://nusync.nus.edu.sg/GDG/survey?survey_uid=136ac03a-ed5e-11f0-8092-06adae5a1497", "_blank", "noopener,noreferrer");
+  }
   };
 
   return (

@@ -73,7 +73,9 @@ function getRoleTone(role: string, index: number): string {
     return "is-gold";
   }
 
-  if (normalizedRole.includes("game")) {
+  if (normalizedRole.includes("game")||
+    normalizedRole.includes("designer") ||
+    normalizedRole.includes("level") ) {
     return "is-cyan";
   }
 
